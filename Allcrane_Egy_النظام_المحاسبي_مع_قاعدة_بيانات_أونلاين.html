@@ -265,6 +265,28 @@
 
 <div id="cloudSyncIndicator" style="position:fixed; bottom:10px; left:10px; z-index:9999; background:#262420; color:#fff; padding:6px 12px; border-radius:20px; font-size:12px; opacity:0.85;">⏳ جاري الإعداد...</div>
 
+<!-- ============ شاشة تسجيل الدخول ============ -->
+<div id="login-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px">
+  <div style="width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 28px;box-shadow:0 4px 24px rgba(0,0,0,0.06)">
+    <div style="text-align:center;margin-bottom:24px">
+      <p style="font-size:20px;font-weight:800;margin:0">Allcrane <span style="color:var(--accent)">Egy</span></p>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:4px 0 0">تسجيل الدخول للنظام المحاسبي</p>
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>البريد الإلكتروني</label>
+      <input type="email" id="login-email" placeholder="you@example.com" autocomplete="username">
+    </div>
+    <div class="field" style="margin-bottom:6px">
+      <label>كلمة المرور</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <p id="login-error" style="color:var(--danger);font-size:12.5px;min-height:18px;margin:6px 0 14px"></p>
+    <button class="btn btn-primary" id="login-submit-btn" style="width:100%;justify-content:center">تسجيل الدخول</button>
+    <p style="font-size:11.5px;color:var(--ink-mute);text-align:center;margin:16px 0 0">محتاج حساب؟ تواصل مع مسؤول النظام لإنشاء حساب جديد</p>
+  </div>
+</div>
+
+<div id="app-shell-wrapper" style="display:none">
 <div class="app-shell">
   <div class="sidebar">
     <div class="brand-row">
@@ -301,6 +323,7 @@
 
     <div class="nav-section-label">العمالة</div>
     <div class="nav-item" data-page="attendance-page"><span class="nav-icon">🗓️</span><span>تسجيل الحضور</span></div>
+    <div class="nav-item" data-page="attendance-import-page"><span class="nav-icon">⬆️</span><span>استيراد حضور</span></div>
     <div class="nav-item" data-page="labor-dues-page"><span class="nav-icon">💰</span><span>مستحقات العمال</span></div>
     <div class="nav-item" data-page="advances-page"><span class="nav-icon">📋</span><span>السلف والخصومات</span></div>
     <div class="nav-item" data-page="labor-report-page"><span class="nav-icon">📈</span><span>تقرير قبض العمالة</span></div>
@@ -312,6 +335,7 @@
 
     <div class="nav-section-label">الإعدادات</div>
     <div class="nav-item" data-page="settings-page"><span class="nav-icon">⚙️</span><span>بيانات الشركة</span></div>
+    <div class="nav-item" id="logout-btn" style="margin-top:6px"><span class="nav-icon">🚪</span><span>تسجيل الخروج</span></div>
   </div>
 
   <div class="main">
@@ -516,6 +540,7 @@
           <option value="إيراد">إيراد</option>
           <option value="مصروف">مصروف</option>
         </select>
+        <select id="txn-filter-account"><option value="">كل الحسابات</option></select>
         <select id="txn-filter-project"><option value="">كل المشاريع</option></select>
         <select id="txn-filter-customer"><option value="">كل العملاء</option></select>
         <select id="txn-filter-treasury">
@@ -1036,15 +1061,18 @@
         <div class="form-grid" style="margin-bottom:14px">
           <div class="field">
             <label>التاريخ</label>
-            <input type="date" id="att-date">
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="date" id="att-date">
+              <span id="att-date-dayname" style="font-size:13px;color:var(--accent-dark);font-weight:600;white-space:nowrap"></span>
+            </div>
           </div>
           <div class="field">
             <label>المشروع (اختياري لكل الصفوف)</label>
             <select id="att-default-project"></select>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1.4fr 1.1fr 80px 75px 75px 75px 1fr 32px;gap:8px;font-size:11.5px;color:var(--ink-mute);padding:0 2px 6px">
-          <span>العامل</span><span>المشروع</span><span style="text-align:left">حالة الحضور</span><span style="text-align:left">اليومية</span><span style="text-align:left">ساعات إضافي</span><span style="text-align:left">بدلات</span><span style="text-align:left">المستحق المتوقع</span><span></span>
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 75px 65px 65px 65px 1.3fr 0.9fr 32px;gap:8px;font-size:11.5px;color:var(--ink-mute);padding:0 2px 6px">
+          <span>العامل</span><span>المشروع</span><span style="text-align:left">حالة الحضور</span><span style="text-align:left">اليومية</span><span style="text-align:left">ساعات إضافي</span><span style="text-align:left">بدلات</span><span style="text-align:left">المستحق المتوقع</span><span>الوصف (اشتغل إيه)</span><span></span>
         </div>
         <div id="att-rows"></div>
         <button class="btn btn-sm" id="att-add-row" style="margin-top:6px">+ إضافة عامل للحضور</button>
@@ -1063,10 +1091,76 @@
       </div>
       <div class="card card-tight">
         <table class="mono-table">
-          <thead><tr><th>التاريخ</th><th>العامل</th><th>المشروع</th><th>الحالة</th><th class="text-left">إضافي</th><th class="text-left">بدلات</th><th class="text-left">المستحق</th><th>السداد</th><th></th></tr></thead>
+          <thead><tr><th>التاريخ</th><th>العامل</th><th>المشروع</th><th>الحالة</th><th class="text-left">إضافي</th><th class="text-left">بدلات</th><th class="text-left">المستحق</th><th>الوصف</th><th>السداد</th><th></th></tr></thead>
           <tbody id="att-log-body"></tbody>
         </table>
         <div class="empty-state" id="att-log-empty" style="display:none"><div class="icon">📭</div><p>لا يوجد حضور مسجل بعد</p></div>
+      </div>
+    </div>
+
+    <!-- ============ ATTENDANCE IMPORT ============ -->
+    <div class="page" id="attendance-import-page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">استيراد حضور</h1>
+          <p class="page-sub">استورد دفعة حضور عمال من ملف Excel أو CSV دفعة واحدة</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <p style="font-weight:700;font-size:14px;margin:0 0 10px">الأعمدة المطلوبة في الملف</p>
+        <p style="font-size:12.5px;color:var(--ink-soft);line-height:2;margin:0 0 16px">
+          الملف لازم يحتوي على الأعمدة دي بالترتيب (بعناوين في الصف الأول):<br>
+          <b>التاريخ</b> (بصيغة YYYY-MM-DD أو DD/MM/YYYY) — <b>كود العامل</b> (أو اسمه بالظبط) — <b>المشروع</b> — <b>الحالة</b> (حاضر أو غائب) — <b>ساعات إضافي</b> (اختياري) — <b>بدلات</b> (اختياري) — <b>الوصف</b> (اختياري)<br>
+          العامل لازم يكون مسجّل بالفعل في صفحة "العمالة" قبل الاستيراد — العمال الغير معروفين هيظهروا كصفوف بها مشاكل.<br>
+          المشروع الغير موجود هيتم إضافته تلقائيًا.
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="file" id="att-import-file-input" accept=".csv,.xlsx,.xls" style="display:none">
+          <button class="btn btn-primary" id="att-import-file-btn">📁 اختر ملف</button>
+          <button class="btn btn-sm" id="att-import-download-template-btn">⬇ تحميل نموذج فارغ</button>
+          <span id="att-import-file-name" style="font-size:12.5px;color:var(--ink-mute)"></span>
+        </div>
+      </div>
+
+      <div id="att-import-preview-section" style="display:none">
+        <div class="stat-grid cols-3">
+          <div class="stat-card">
+            <p class="stat-label">إجمالي الصفوف</p>
+            <p class="stat-value" id="att-import-total-rows">0</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">صفوف صحيحة جاهزة للاستيراد</p>
+            <p class="stat-value" id="att-import-valid-rows" style="color:var(--success)">0</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">صفوف بها مشاكل</p>
+            <p class="stat-value" id="att-import-error-rows" style="color:var(--danger)">0</p>
+          </div>
+        </div>
+
+        <div id="att-import-new-entities-note" style="display:none;margin-bottom:14px">
+          <div class="alert-card info">
+            <span class="alert-icon">ℹ️</span>
+            <div class="alert-body">
+              <p class="alert-title">مشاريع جديدة هيتم إضافتها تلقائيًا</p>
+              <p class="alert-desc" id="att-import-new-entities-detail"></p>
+            </div>
+          </div>
+        </div>
+
+        <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px">معاينة الصفوف (أول 50 صف)</p>
+        <div class="card card-tight" style="margin-bottom:20px">
+          <table class="mono-table">
+            <thead><tr><th>#</th><th>الحالة</th><th>التاريخ</th><th>العامل</th><th>المشروع</th><th>حالة الحضور</th><th class="text-left">إضافي</th><th class="text-left">بدلات</th><th class="text-left">المستحق</th><th>الوصف</th></tr></thead>
+            <tbody id="att-import-preview-body"></tbody>
+          </table>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <button class="btn" id="att-import-cancel-btn">إلغاء</button>
+          <button class="btn btn-primary" id="att-import-commit-btn">استيراد الصفوف الصحيحة</button>
+        </div>
       </div>
     </div>
 
@@ -1121,6 +1215,10 @@
 
           <div class="form-grid" style="margin-bottom:14px">
             <div class="field">
+              <label>تاريخ السداد</label>
+              <input type="date" id="ld-payment-date">
+            </div>
+            <div class="field">
               <label>مبلغ السداد (يمكن سداد جزء من المستحق)</label>
               <input type="number" id="ld-payment-amount" min="0" step="0.01">
             </div>
@@ -1166,6 +1264,10 @@
           </div>
 
           <div class="form-grid" style="margin-bottom:14px">
+            <div class="field">
+              <label>تاريخ السداد</label>
+              <input type="date" id="ld-monthly-payment-date">
+            </div>
             <div class="field">
               <label>مبلغ السداد</label>
               <input type="number" id="ld-monthly-payment-amount" min="0" step="0.01">
@@ -1489,6 +1591,7 @@
 
   </div>
 </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -1745,7 +1848,71 @@ function saveState() {
 }
 
 let state = loadState();
-initCloudState();
+
+/* =====================================================================
+   نظام تسجيل الدخول (Supabase Auth)
+   ===================================================================== */
+function showAppShell() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell-wrapper').style.display = '';
+  navigateToPage('dashboard-page');
+}
+
+function showLoginScreen() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-shell-wrapper').style.display = 'none';
+}
+
+async function checkExistingSession() {
+  try {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) throw error;
+    if (data && data.session) {
+      showAppShell();
+      initCloudState();
+    } else {
+      showLoginScreen();
+    }
+  } catch (e) {
+    console.error('Session check failed:', e);
+    showLoginScreen();
+  }
+}
+
+document.getElementById('login-submit-btn').addEventListener('click', async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errorEl = document.getElementById('login-error');
+  errorEl.textContent = '';
+
+  if (!email || !password) {
+    errorEl.textContent = 'من فضلك أدخل البريد الإلكتروني وكلمة المرور';
+    return;
+  }
+
+  const btn = document.getElementById('login-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'جاري تسجيل الدخول...';
+
+  try {
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      errorEl.textContent = 'بيانات الدخول غير صحيحة، أو الحساب غير موجود';
+    } else {
+      showAppShell();
+      initCloudState();
+    }
+  } catch (e) {
+    errorEl.textContent = 'حدث خطأ أثناء تسجيل الدخول — تأكد من اتصال الإنترنت وحاول مرة أخرى';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'تسجيل الدخول';
+  }
+});
+
+document.getElementById('login-password').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('login-submit-btn').click();
+});
 
 /* =====================================================================
    أدوات مساعدة عامة
@@ -1758,6 +1925,21 @@ function fmtDate(d) {
   if (!d) return '—';
   const parts = d.split('-');
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+const ARABIC_DAY_NAMES = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+function arabicDayName(dateStr) {
+  if (!dateStr) return '';
+  // نبني التاريخ بصيغة صريحة (سنة-شهر-يوم) لتفادي مشاكل المنطقة الزمنية عند تحويل النص لتاريخ
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return '';
+  const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  if (isNaN(d.getTime())) return '';
+  return ARABIC_DAY_NAMES[d.getDay()];
 }
 function showToast(msg, isError) {
   const t = document.getElementById('toast');
@@ -1863,6 +2045,7 @@ const PAGE_RENDER_HOOKS = {
   'accounts-page': renderAccountsPage,
   'workers-page': renderWorkersPage,
   'attendance-page': renderAttendancePage,
+  'attendance-import-page': renderAttendanceImportPage,
   'labor-dues-page': renderLaborDuesPage,
   'advances-page': renderAdvancesPage,
   'labor-report-page': renderLaborReportPage,
@@ -1889,7 +2072,18 @@ function navigateToPage(pageId) {
 }
 
 document.querySelectorAll('.nav-item').forEach(item => {
+  if (!item.dataset.page) return; // عناصر زي زرار تسجيل الخروج مالهاش صفحة، بتتعامل بمنطق منفصل
   item.addEventListener('click', () => navigateToPage(item.dataset.page));
+});
+
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  if (!confirm('هل تريد تسجيل الخروج من النظام؟')) return;
+  try {
+    await supabaseClient.auth.signOut();
+  } catch (e) {
+    console.error('Sign out error:', e);
+  }
+  location.reload();
 });
 
 /* =====================================================================
@@ -2322,18 +2516,32 @@ document.getElementById('import-download-template-btn').addEventListener('click'
 function populateTxnFilters() {
   populateSelect(document.getElementById('txn-filter-project'), state.projects, 'كل المشاريع', '');
   populateSelect(document.getElementById('txn-filter-customer'), state.customers, 'كل العملاء', '');
+
+  const accountSel = document.getElementById('txn-filter-account');
+  const currentVal = accountSel.value;
+  accountSel.innerHTML = '<option value="">كل الحسابات</option>';
+  // بنجمع كل حسابات الإيراد والمصروف مع بعض في قائمة واحدة، ونشيل أي تكرار
+  const allAccounts = [...new Set([...state.accounts.revenue, ...state.accounts.expense])];
+  allAccounts.forEach(acc => {
+    const opt = document.createElement('option');
+    opt.value = acc; opt.textContent = acc;
+    if (acc === currentVal) opt.selected = true;
+    accountSel.appendChild(opt);
+  });
 }
 
 function getFilteredTxns() {
   const search = document.getElementById('txn-filter-search').value.trim().toLowerCase();
   const kind = document.getElementById('txn-filter-kind').value;
+  const account = document.getElementById('txn-filter-account').value;
   const project = document.getElementById('txn-filter-project').value;
   const customer = document.getElementById('txn-filter-customer').value;
   const treasury = document.getElementById('txn-filter-treasury').value;
 
   return [...state.transactions]
-    .filter(t => !search || t.desc.toLowerCase().includes(search) || t.account.toLowerCase().includes(search))
+    .filter(t => !search || t.desc.toLowerCase().includes(search))
     .filter(t => !kind || t.kind === kind)
+    .filter(t => !account || t.account === account)
     .filter(t => !project || t.project === project)
     .filter(t => !customer || t.customer === customer)
     .filter(t => !treasury || t.treasury === treasury)
@@ -2364,12 +2572,21 @@ function renderTxnsTable() {
       <td></td>
       <td></td>
       <td>${t.desc}${t.notes ? `<br><span style="color:var(--ink-mute);font-size:11.5px">${t.notes}</span>` : ''}</td>
-      <td class="text-left" style="color:${amountColor};font-weight:700">${amountSign}${fmt(t.amount)}</td>
+      <td class="text-left"></td>
       <td></td>
       <td></td>
     `;
 
     const cells = tr.querySelectorAll('td');
+
+    // خلية التاريخ — قابلة للتعديل بحقل تاريخ عادي
+    const dateCell = cells[1];
+    makeEditableInputCell(dateCell, t.date, 'date', fmtDate, (newVal) => {
+      t.date = newVal;
+      saveState();
+      showToast(`تم تحديث تاريخ الحركة إلى ${fmtDate(newVal)}`);
+      renderTxnsTable();
+    });
 
     // خلية النوع (إيراد/مصروف) — قابلة للتعديل. تغييرها بيغيّر قائمة الحسابات المتاحة تلقائيًا
     const kindCell = cells[2];
@@ -2422,6 +2639,22 @@ function renderTxnsTable() {
       renderTxnsTable();
     });
 
+    // خلية المبلغ — قابلة للتعديل بحقل رقمي، مع الحفاظ على لون وإشارة النوع (+ إيراد / - مصروف)
+    const amountCell = cells[7];
+    makeEditableInputCell(
+      amountCell, t.amount, 'number',
+      (v) => `${amountSign}${fmt(v)}`,
+      (newVal) => {
+        t.amount = newVal;
+        saveState();
+        showToast(`تم تحديث المبلغ إلى ${fmt(newVal)}`);
+        renderTxnsTable();
+      },
+      (v) => (isNaN(v) || v <= 0) ? 'المبلغ لازم يكون رقم أكبر من صفر' : null
+    );
+    amountCell.style.color = amountColor;
+    amountCell.style.fontWeight = '700';
+
     const delBtn = document.createElement('button');
     delBtn.className = 'icon-btn';
     delBtn.textContent = '✕';
@@ -2470,6 +2703,56 @@ function makeEditableCell(cellEl, currentValue, options, onSave) {
         makeEditableCell(cellEl, currentValue, options, onSave);
       }
     });
+  });
+}
+
+/* خلية جدول قابلة للتعديل بحقل إدخال حر (تاريخ أو رقم) بدل قائمة اختيار ثابتة */
+function makeEditableInputCell(cellEl, currentValue, inputType, displayFn, onSave, validateFn) {
+  cellEl.textContent = displayFn ? displayFn(currentValue) : currentValue;
+  cellEl.style.cursor = 'pointer';
+  cellEl.title = 'اضغط للتعديل';
+  cellEl.addEventListener('click', function onClick() {
+    cellEl.removeEventListener('click', onClick);
+    const input = document.createElement('input');
+    input.type = inputType;
+    if (inputType === 'number') { input.step = '0.01'; input.min = '0'; }
+    input.value = currentValue;
+    input.style.minWidth = inputType === 'number' ? '110px' : '140px';
+    if (inputType === 'number') input.style.textAlign = 'left';
+    cellEl.innerHTML = '';
+    cellEl.appendChild(input);
+    input.focus();
+    if (inputType === 'number') input.select();
+
+    function commit() {
+      let newVal = input.value;
+      if (inputType === 'number') newVal = parseFloat(newVal);
+      if (validateFn) {
+        const err = validateFn(newVal);
+        if (err) {
+          showToast(err, true);
+          cellEl.innerHTML = '';
+          makeEditableInputCell(cellEl, currentValue, inputType, displayFn, onSave, validateFn);
+          return;
+        }
+      }
+      const unchanged = newVal === currentValue;
+      const invalidEmpty = newVal === '' || (typeof newVal === 'number' && isNaN(newVal));
+      if (!unchanged && !invalidEmpty) {
+        onSave(newVal);
+      } else {
+        cellEl.innerHTML = '';
+        makeEditableInputCell(cellEl, currentValue, inputType, displayFn, onSave, validateFn);
+      }
+    }
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') input.blur();
+      if (e.key === 'Escape') {
+        cellEl.innerHTML = '';
+        makeEditableInputCell(cellEl, currentValue, inputType, displayFn, onSave, validateFn);
+      }
+    });
+    input.addEventListener('blur', commit);
   });
 }
 
@@ -2552,13 +2835,14 @@ function renderEditableKindCell(cellEl, currentValue, onSave) {
   });
 }
 
-['txn-filter-search','txn-filter-kind','txn-filter-project','txn-filter-customer','txn-filter-treasury'].forEach(id => {
+['txn-filter-search','txn-filter-kind','txn-filter-account','txn-filter-project','txn-filter-customer','txn-filter-treasury'].forEach(id => {
   document.getElementById(id).addEventListener('input', renderTxnsTable);
   document.getElementById(id).addEventListener('change', renderTxnsTable);
 });
 document.getElementById('txn-filter-clear').addEventListener('click', () => {
   document.getElementById('txn-filter-search').value = '';
   document.getElementById('txn-filter-kind').value = '';
+  document.getElementById('txn-filter-account').value = '';
   document.getElementById('txn-filter-project').value = '';
   document.getElementById('txn-filter-customer').value = '';
   document.getElementById('txn-filter-treasury').value = '';
@@ -3965,7 +4249,7 @@ document.getElementById('workers-add-btn').addEventListener('click', () => {
 let attRows = [];
 
 function newAttRow() {
-  return { rowId: crypto.randomUUID(), workerId: '', projectId: '', status: 'حاضر', dayRateOverride: null, overtimeHours: 0, allowance: 0 };
+  return { rowId: crypto.randomUUID(), workerId: '', projectId: '', status: 'حاضر', dayRateOverride: null, overtimeHours: 0, allowance: 0, description: '' };
 }
 
 function populateWorkerSelectEl(select, currentVal) {
@@ -3989,7 +4273,7 @@ function renderAttRows() {
   attRows.forEach(row => {
     const rowEl = document.createElement('div');
     rowEl.style.display = 'grid';
-    rowEl.style.gridTemplateColumns = '1.4fr 1.1fr 80px 75px 75px 75px 1fr 32px';
+    rowEl.style.gridTemplateColumns = '1.2fr 1fr 75px 65px 65px 65px 1.3fr 0.9fr 32px';
     rowEl.style.gap = '8px';
     rowEl.style.marginBottom = '8px';
     rowEl.style.alignItems = 'center';
@@ -4069,6 +4353,13 @@ function renderAttRows() {
     }
     updateRowDue();
 
+    const descInput = document.createElement('input');
+    descInput.type = 'text';
+    descInput.value = row.description || '';
+    descInput.placeholder = 'مثال: صيانة كرين رقم 2';
+    descInput.title = 'وصف مختصر لطبيعة الشغل اللي اتعمل اليوم';
+    descInput.addEventListener('input', () => { row.description = descInput.value; });
+
     const delBtn = document.createElement('button');
     delBtn.className = 'icon-btn';
     delBtn.textContent = '✕';
@@ -4084,6 +4375,7 @@ function renderAttRows() {
     rowEl.appendChild(otInput);
     rowEl.appendChild(allowanceInput);
     rowEl.appendChild(dueSpan);
+    rowEl.appendChild(descInput);
     rowEl.appendChild(delBtn);
     container.appendChild(rowEl);
   });
@@ -4121,7 +4413,8 @@ document.getElementById('att-save-btn').addEventListener('click', () => {
       overtimeHours: r.overtimeHours || 0,
       overtimeRate: w.overtimeRate,
       allowance: r.allowance || 0,
-      totalDue
+      totalDue,
+      description: r.description || ''
     });
     savedCount++;
   });
@@ -4171,13 +4464,14 @@ function renderAttendanceLog() {
     const payBadge = isPaid ? '<span class="badge badge-success">مسدد</span>' : (paid > 0.005 ? '<span class="badge badge-warning">جزئي</span>' : '<span class="badge badge-danger">غير مسدد</span>');
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${fmtDate(a.date)}</td>
+      <td>${fmtDate(a.date)} <span style="font-size:11px;color:var(--ink-mute)">(${arabicDayName(a.date)})</span></td>
       <td>${w ? w.name : '—'}</td>
       <td>${a.projectId}</td>
       <td>${statusBadge}</td>
       <td class="text-left num">${a.overtimeHours || 0}</td>
       <td class="text-left num">${fmt(a.allowance || 0)}</td>
       <td class="text-left num" style="font-weight:700">${fmt(a.totalDue)}</td>
+      <td style="font-size:12px;color:var(--ink-soft)">${a.description ? escapeHtml(a.description) : '—'}</td>
       <td>${payBadge}</td>
       <td></td>
     `;
@@ -4209,14 +4503,245 @@ document.getElementById('att-filter-clear').addEventListener('click', () => {
   renderAttendanceLog();
 });
 
+function updateAttDateDayName() {
+  document.getElementById('att-date-dayname').textContent = arabicDayName(document.getElementById('att-date').value);
+}
+document.getElementById('att-date').addEventListener('input', updateAttDateDayName);
+document.getElementById('att-date').addEventListener('change', updateAttDateDayName);
+
 function renderAttendancePage() {
   document.getElementById('att-date').valueAsDate = document.getElementById('att-date').value ? new Date(document.getElementById('att-date').value) : new Date();
+  updateAttDateDayName();
   populateSelect(document.getElementById('att-default-project'), state.projects, '— بدون افتراضي —', '');
   if (attRows.length === 0) attRows = [newAttRow(), newAttRow()];
   renderAttRows();
   populateAttendanceFilters();
   renderAttendanceLog();
 }
+
+/* =====================================================================
+   استيراد حضور العمالة
+   ===================================================================== */
+let attImportParsedRows = [];
+
+function renderAttendanceImportPage() {
+  attImportParsedRows = [];
+  document.getElementById('att-import-preview-section').style.display = 'none';
+  document.getElementById('att-import-file-input').value = '';
+  document.getElementById('att-import-file-name').textContent = '';
+}
+
+const ATT_IMPORT_EXPECTED_HEADERS = ['التاريخ', 'كود العامل', 'المشروع', 'الحالة', 'ساعات إضافي', 'بدلات', 'الوصف'];
+
+function findWorkerByCodeOrName(raw) {
+  const str = String(raw || '').trim();
+  if (!str) return null;
+  return state.workers.find(w => w.code === str) || state.workers.find(w => w.name === str) || null;
+}
+
+function normalizeAttImportStatus(raw) {
+  const str = String(raw || '').trim();
+  if (str === 'حاضر' || str.toLowerCase() === 'present') return 'حاضر';
+  if (str === 'غائب' || str.toLowerCase() === 'absent') return 'غائب';
+  return null;
+}
+
+/* بيحوّل مصفوفة صفوف خام (array of arrays, أول صف عناوين) لصفوف حضور مُتحقق منها */
+function validateAttImportRows(rows) {
+  if (rows.length === 0) return [];
+  const header = rows[0].map(h => String(h || '').trim());
+  const dataRows = rows.slice(1).filter(r => r.some(c => c !== '' && c !== null && c !== undefined));
+
+  const idx = {
+    date: header.indexOf('التاريخ'),
+    workerCode: header.indexOf('كود العامل'),
+    project: header.indexOf('المشروع'),
+    status: header.indexOf('الحالة'),
+    overtimeHours: header.indexOf('ساعات إضافي'),
+    allowance: header.indexOf('بدلات'),
+    desc: header.indexOf('الوصف')
+  };
+  const useDefaultOrder = idx.date === -1 || idx.workerCode === -1 || idx.status === -1;
+  if (useDefaultOrder) {
+    idx.date = 0; idx.workerCode = 1; idx.project = 2; idx.status = 3;
+    idx.overtimeHours = 4; idx.allowance = 5; idx.desc = 6;
+  }
+
+  return dataRows.map((row, i) => {
+    const errors = [];
+    const date = parseImportDate(row[idx.date]);
+    if (!date) errors.push('تاريخ غير صالح');
+
+    const worker = findWorkerByCodeOrName(row[idx.workerCode]);
+    if (!worker) errors.push('العامل غير موجود (تحقق من الكود أو الاسم)');
+
+    const project = String(row[idx.project] || '').trim() || 'عام / غير محدد';
+
+    const status = normalizeAttImportStatus(row[idx.status]);
+    if (!status) errors.push('الحالة لازم تكون "حاضر" أو "غائب"');
+
+    const overtimeHours = parseFloat(row[idx.overtimeHours]) || 0;
+    const allowance = parseFloat(row[idx.allowance]) || 0;
+    const desc = String(row[idx.desc] || '').trim();
+
+    let totalDue = 0;
+    if (worker) {
+      const isMonthly = worker.employmentType === 'شهري';
+      const effectiveDailyRate = isMonthly ? 0 : worker.dailyRate;
+      totalDue = attendanceDueAmount(status || 'غائب', effectiveDailyRate, overtimeHours, worker.overtimeRate, allowance, worker.employmentType);
+    }
+
+    return {
+      rowNum: i + 2,
+      date, workerId: worker ? worker.id : null, workerLabel: worker ? worker.name : String(row[idx.workerCode] || '—'),
+      project, status, overtimeHours, allowance, desc, totalDue,
+      valid: errors.length === 0,
+      errors
+    };
+  });
+}
+
+document.getElementById('att-import-file-btn').addEventListener('click', () => document.getElementById('att-import-file-input').click());
+
+document.getElementById('att-import-file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('att-import-file-name').textContent = file.name;
+
+  try {
+    const rawRows = await readFileAsRows(file);
+    attImportParsedRows = validateAttImportRows(rawRows);
+    renderAttImportPreview();
+  } catch (err) {
+    showToast(err.message || 'حدث خطأ أثناء قراءة الملف', true);
+  }
+});
+
+function renderAttImportPreview() {
+  const section = document.getElementById('att-import-preview-section');
+  if (attImportParsedRows.length === 0) {
+    section.style.display = 'none';
+    showToast('الملف فارغ أو لا يحتوي على صفوف بيانات', true);
+    return;
+  }
+  section.style.display = 'block';
+
+  const validRows = attImportParsedRows.filter(r => r.valid);
+  const errorRows = attImportParsedRows.filter(r => !r.valid);
+
+  document.getElementById('att-import-total-rows').textContent = attImportParsedRows.length;
+  document.getElementById('att-import-valid-rows').textContent = validRows.length;
+  document.getElementById('att-import-error-rows').textContent = errorRows.length;
+
+  const newProjects = new Set();
+  validRows.forEach(r => { if (!state.projects.includes(r.project)) newProjects.add(r.project); });
+  const noteEl = document.getElementById('att-import-new-entities-note');
+  noteEl.style.display = newProjects.size > 0 ? 'block' : 'none';
+  if (newProjects.size > 0) {
+    document.getElementById('att-import-new-entities-detail').textContent = `${newProjects.size} مشروع جديد هيُضاف تلقائيًا`;
+  }
+
+  const tbody = document.getElementById('att-import-preview-body');
+  tbody.innerHTML = '';
+  attImportParsedRows.slice(0, 50).forEach(r => {
+    const tr = document.createElement('tr');
+    if (!r.valid) tr.style.background = 'var(--danger-bg)';
+    const statusCell = r.valid
+      ? '<span class="badge badge-success">✓ صحيح</span>'
+      : `<span class="badge badge-danger" title="${r.errors.join('، ')}">✕ ${r.errors[0]}</span>`;
+    const attBadge = r.status === 'حاضر' ? '<span class="badge badge-success">حاضر</span>' : (r.status === 'غائب' ? '<span class="badge badge-mute">غائب</span>' : '—');
+    tr.innerHTML = `
+      <td>${r.rowNum}</td>
+      <td>${statusCell}</td>
+      <td>${r.date ? fmtDate(r.date) : '—'}</td>
+      <td>${escapeHtml(r.workerLabel)}</td>
+      <td>${escapeHtml(r.project)}</td>
+      <td>${attBadge}</td>
+      <td class="text-left num">${r.overtimeHours || 0}</td>
+      <td class="text-left num">${fmt(r.allowance || 0)}</td>
+      <td class="text-left num" style="font-weight:700">${fmt(r.totalDue || 0)}</td>
+      <td style="font-size:12px">${r.desc ? escapeHtml(r.desc) : '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  if (attImportParsedRows.length > 50) {
+    const infoRow = document.createElement('tr');
+    infoRow.innerHTML = `<td colspan="10" style="text-align:center;color:var(--ink-mute);padding:12px">... و ${attImportParsedRows.length - 50} صف إضافي مش ظاهرين في المعاينة، بس هيتم استيرادهم لو صحيحين</td>`;
+    tbody.appendChild(infoRow);
+  }
+}
+
+document.getElementById('att-import-cancel-btn').addEventListener('click', () => {
+  attImportParsedRows = [];
+  document.getElementById('att-import-preview-section').style.display = 'none';
+  document.getElementById('att-import-file-input').value = '';
+  document.getElementById('att-import-file-name').textContent = '';
+});
+
+document.getElementById('att-import-commit-btn').addEventListener('click', () => {
+  const validRows = attImportParsedRows.filter(r => r.valid);
+  if (validRows.length === 0) { showToast('لا توجد صفوف صحيحة للاستيراد', true); return; }
+
+  if (!confirm(`هل تريد استيراد ${validRows.length} يوم حضور إلى النظام؟ هذا الإجراء سيضيفهم لسجل الحضور مباشرة.`)) return;
+
+  let addedProjects = 0, savedCount = 0, skippedCount = 0;
+
+  validRows.forEach(r => {
+    if (!state.projects.includes(r.project)) { state.projects.push(r.project); addedProjects++; }
+
+    const exists = state.attendance.some(a => a.workerId === r.workerId && a.date === r.date && a.projectId === r.project);
+    if (exists) { skippedCount++; return; }
+
+    const worker = state.workers.find(w => w.id === r.workerId);
+    const isMonthly = worker.employmentType === 'شهري';
+    const effectiveDailyRate = isMonthly ? 0 : worker.dailyRate;
+
+    state.attendance.push({
+      id: crypto.randomUUID(),
+      workerId: r.workerId,
+      projectId: r.project,
+      date: r.date,
+      status: r.status,
+      dayRate: effectiveDailyRate,
+      overtimeHours: r.overtimeHours || 0,
+      overtimeRate: worker.overtimeRate,
+      allowance: r.allowance || 0,
+      totalDue: r.totalDue || 0,
+      description: r.desc || ''
+    });
+    savedCount++;
+  });
+
+  saveState();
+  const extraNote = addedProjects > 0 ? ` (${addedProjects} مشروع جديد أُضيف تلقائيًا)` : '';
+  if (skippedCount > 0) {
+    showToast(`تم استيراد ${savedCount} — تم تجاهل ${skippedCount} (مسجل حضورهم في نفس المشروع بنفس اليوم بالفعل)${extraNote}`, savedCount === 0);
+  } else {
+    showToast(`تم استيراد ${savedCount} يوم حضور بنجاح${extraNote}`);
+  }
+
+  attImportParsedRows = [];
+  document.getElementById('att-import-preview-section').style.display = 'none';
+  document.getElementById('att-import-file-input').value = '';
+  document.getElementById('att-import-file-name').textContent = '';
+});
+
+document.getElementById('att-import-download-template-btn').addEventListener('click', () => {
+  let csv = '\uFEFF';
+  csv += ATT_IMPORT_EXPECTED_HEADERS.map(h => `"${h}"`).join(',') + '\r\n';
+  const sampleWorkerCode = state.workers[0] ? state.workers[0].code : 'W001';
+  csv += `"2026-07-16","${sampleWorkerCode}","اسم المشروع","حاضر","0","0","وصف الشغل اللي اتعمل"\r\n`;
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'نموذج_استيراد_حضور.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
 
 /* =====================================================================
    شاشة مستحقات العمال + السداد
@@ -4291,6 +4816,7 @@ function openLaborSettlement(workerId) {
   renderLaborSettlementStats();
   renderLaborSettlementRows();
   document.getElementById('ld-payment-amount').value = '';
+  document.getElementById('ld-payment-date').valueAsDate = new Date();
   document.getElementById('ld-settlement-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -4373,7 +4899,9 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
   const w = state.workers.find(w => w.id === currentSettlementWorkerId);
   const dues = computeWorkerDues(currentSettlementWorkerId);
   const amountPaid = parseFloat(document.getElementById('ld-payment-amount').value) || 0;
+  const paymentDate = document.getElementById('ld-payment-date').value;
 
+  if (!paymentDate) { showToast('من فضلك اختر تاريخ السداد', true); return; }
   if (amountPaid <= 0) { showToast('من فضلك أدخل مبلغ سداد أكبر من صفر', true); return; }
   if (amountPaid > dues.balanceDue + 0.005) {
     showToast(`المبلغ أكبر من المتبقي المستحق (${fmt(dues.balanceDue)})`, true);
@@ -4412,7 +4940,7 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
   const txn = {
     id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
     seq: state.nextTxnNo,
-    date: new Date().toISOString().slice(0, 10),
+    date: paymentDate,
     kind: 'مصروف',
     account: LABOR_EXPENSE_ACCOUNT,
     project: mainProject,
@@ -4482,6 +5010,7 @@ function openMonthlySettlement(workerId) {
   }
 
   renderMonthlySettlementStats();
+  document.getElementById('ld-monthly-payment-date').valueAsDate = new Date();
   document.getElementById('ld-monthly-settlement-section').style.display = 'block';
   document.getElementById('ld-monthly-settlement-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -4609,6 +5138,8 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
   const netDue = Math.max(0, md.total - advDedTotal);
 
   const amountPaid = parseFloat(document.getElementById('ld-monthly-payment-amount').value) || 0;
+  const paymentDate = document.getElementById('ld-monthly-payment-date').value;
+  if (!paymentDate) { showToast('من فضلك اختر تاريخ السداد', true); return; }
   if (amountPaid <= 0) { showToast('من فضلك أدخل مبلغ سداد أكبر من صفر', true); return; }
   if (amountPaid > netDue + 0.005) { showToast(`المبلغ أكبر من صافي المستحق (${fmt(netDue)})`, true); return; }
 
@@ -4628,7 +5159,7 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
   const txn = {
     id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
     seq: state.nextTxnNo,
-    date: new Date().toISOString().slice(0, 10),
+    date: paymentDate,
     kind: 'مصروف',
     account: LABOR_EXPENSE_ACCOUNT,
     project: mainProject,
@@ -5623,8 +6154,8 @@ function initExportToolbars() {
 /* =====================================================================
    تهيئة أولى
    ===================================================================== */
-navigateToPage('dashboard-page');
 initExportToolbars();
+checkExistingSession();
 
 </script>
 </body>
