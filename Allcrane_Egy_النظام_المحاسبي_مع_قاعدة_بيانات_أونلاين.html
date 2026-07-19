@@ -126,7 +126,9 @@
   .btn:disabled { opacity: .45; cursor: not-allowed; }
 
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 18px; }
-  .card-tight { padding: 0; overflow: hidden; }
+  .card-tight { padding: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+  .card-tight table { min-width: 640px; }
+  .att-row-grid { display: grid; grid-template-columns: 1.2fr 1fr 75px 65px 65px 65px 1.3fr 0.9fr 32px; gap: 8px; margin-bottom: 8px; align-items: center; }
 
   input, select, textarea {
     font-family: var(--font-body); font-size: 13px; padding: 8px 11px;
@@ -258,6 +260,26 @@
     .sidebar { width: 72px; }
     .brand-sub, .nav-item span:last-child, .nav-section-label { display: none; }
     .main { padding: 18px; }
+    .nav-item { padding: 13px 12px; justify-content: center; }
+    .nav-icon { font-size: 18px; }
+    .btn { padding: 11px 16px; font-size: 14px; }
+    .btn-sm { padding: 9px 14px; font-size: 13px; }
+    input, select { min-height: 40px; }
+    .att-row-grid {
+      grid-template-columns: 1fr;
+      gap: 6px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      background: var(--surface);
+    }
+    .att-row-grid > * { width: 100%; }
+    .filter-bar { flex-direction: column; align-items: stretch; }
+    .filter-bar > * { width: 100%; }
+  }
+  @media (max-width: 480px) {
+    .stat-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -4272,11 +4294,7 @@ function renderAttRows() {
 
   attRows.forEach(row => {
     const rowEl = document.createElement('div');
-    rowEl.style.display = 'grid';
-    rowEl.style.gridTemplateColumns = '1.2fr 1fr 75px 65px 65px 65px 1.3fr 0.9fr 32px';
-    rowEl.style.gap = '8px';
-    rowEl.style.marginBottom = '8px';
-    rowEl.style.alignItems = 'center';
+    rowEl.className = 'att-row-grid';
 
     const workerSel = document.createElement('select');
     populateWorkerSelectEl(workerSel, row.workerId);
