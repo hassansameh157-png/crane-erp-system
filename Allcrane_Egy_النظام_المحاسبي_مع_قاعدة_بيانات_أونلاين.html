@@ -1417,12 +1417,13 @@
 
       <div class="filter-bar">
         <input type="text" id="ld-filter-name" placeholder="ابحث باسم العامل...">
+        <select id="ld-filter-month"><option value="">كل الشهور (الإجمالي الكامل)</option></select>
         <button class="btn btn-sm" id="ld-filter-clear">إعادة تعيين</button>
       </div>
 
       <div class="card card-tight" style="margin-bottom:20px">
         <table>
-          <thead><tr><th>الاسم</th><th>الوظيفة</th><th>النوع</th><th class="text-left">أيام الحضور</th><th class="text-left">إجمالي المستحق</th><th class="text-left">مسدد</th><th class="text-left">الرصيد المفتوح</th><th style="width:180px"></th></tr></thead>
+          <thead><tr><th>الاسم</th><th>الوظيفة</th><th>النوع</th><th class="text-left">أيام الحضور</th><th class="text-left">إجمالي المستحق</th><th class="text-left">مسدد</th><th class="text-left">الرصيد المفتوح</th><th>الوصف</th><th style="width:180px"></th></tr></thead>
           <tbody id="ld-table-body"></tbody>
         </table>
         <div class="empty-state" id="ld-empty" style="display:none"><div class="icon">💰</div><p>لا يوجد عمال أو موظفين مسجلين بعد</p></div>
@@ -1474,6 +1475,7 @@
             <label>اختر الشهر المطلوب سداده</label>
             <select id="ld-monthly-month-select"></select>
           </div>
+          <div id="ld-monthly-close-status" style="margin-bottom:14px;font-size:12.5px"></div>
           <div class="stat-grid cols-3" id="ld-monthly-settlement-stats" style="margin-bottom:16px"></div>
 
           <p style="font-size:12.5px;color:var(--ink-mute);margin:0 0 8px">تفصيل بدلات وإضافي الشهر (حسب يوم الحضور)</p>
@@ -2486,6 +2488,7 @@ function migrateState(s) {
   if (!s.partnerships) s.partnerships = [];
   if (!s.auditLog) s.auditLog = [];
   if (!s.projectCustomerLinks) s.projectCustomerLinks = {};
+  if (!s.closedSalaryMonths) s.closedSalaryMonths = {};
   // كل العمال الحاليين (قبل إضافة نظام الموظفين الشهريين) بيبقوا "يومي" افتراضيًا عشان مفيش تغيير في سلوكهم
   s.workers.forEach(w => {
     if (!w.employmentType) w.employmentType = 'يومي';
@@ -5002,7 +5005,19 @@ function activityMonthsForWorker(workerId) {
   return [...months].sort();
 }
 
-/* حساب مستحقات شهر معين لموظف شهري: المرتب الأساسي (لو الشهر ده لسه ما اتسددش) + إجمالي البدلات/الإضافي المسجلة في الشهر */
+/* هل الشهر ده "خلص" فعليًا من ناحية التاريخ؟ (يعني إحنا في شهر تالي له) */
+function isMonthEnded(month) {
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  return month < currentMonth;
+}
+
+/* هل الشهر ده اتقفل يدويًا لعامل معين؟ (زي لو استقال في نص الشهر واتفقتوا على قفل الحساب بدري) */
+function isMonthManuallyClosed(workerId, month) {
+  const closedList = state.closedSalaryMonths[workerId] || [];
+  return closedList.includes(month);
+}
+
+/* حساب مستحقات شهر معين لموظف شهري: المرتب الأساسي (لو الشهر خلص فعليًا أو اتقفل يدويًا، ولسه ما اتسددش) + إجمالي البدلات/الإضافي المسجلة في الشهر */
 function computeMonthlyDues(workerId, month) {
   const w = state.workers.find(w => w.id === workerId);
   if (!w) return { baseSalary: 0, extras: 0, total: 0, isPaid: false };
@@ -5010,8 +5025,9 @@ function computeMonthlyDues(workerId, month) {
   const isPaid = paidMonths.has(month);
   const monthRecords = workerAttendanceRecords(workerId).filter(a => a.date.startsWith(month));
   const extras = monthRecords.reduce((s, a) => s + a.totalDue, 0); // totalDue هنا بيبقى بس الإضافي+البدلات للموظف الشهري
-  const baseSalary = isPaid ? 0 : w.monthlySalary;
-  return { baseSalary, extras, total: baseSalary + extras, isPaid, daysRecorded: monthRecords.length };
+  const monthReady = isMonthEnded(month) || isMonthManuallyClosed(workerId, month);
+  const baseSalary = (isPaid || !monthReady) ? 0 : w.monthlySalary;
+  return { baseSalary, extras, total: baseSalary + extras, isPaid, monthReady, daysRecorded: monthRecords.length };
 }
 
 function computeWorkerDues(workerId) {
@@ -5418,12 +5434,35 @@ document.getElementById('att-save-btn').addEventListener('click', () => {
 
 function populateAttendanceFilters() {
   const workerSel = document.getElementById('att-filter-worker');
+  const currentVal = workerSel.value;
   workerSel.innerHTML = '<option value="">كل العمال</option>';
-  state.workers.forEach(w => {
-    const opt = document.createElement('option');
-    opt.value = w.id; opt.textContent = w.name;
-    workerSel.appendChild(opt);
-  });
+
+  const monthlyWorkers = state.workers.filter(w => w.employmentType === 'شهري');
+  const dailyWorkers = state.workers.filter(w => w.employmentType !== 'شهري');
+
+  if (monthlyWorkers.length > 0) {
+    const monthlyGroup = document.createElement('optgroup');
+    monthlyGroup.label = 'موظفين شهريين';
+    monthlyWorkers.forEach(w => {
+      const opt = document.createElement('option');
+      opt.value = w.id; opt.textContent = w.name;
+      monthlyGroup.appendChild(opt);
+    });
+    workerSel.appendChild(monthlyGroup);
+  }
+
+  if (dailyWorkers.length > 0) {
+    const dailyGroup = document.createElement('optgroup');
+    dailyGroup.label = 'عمال يوميين';
+    dailyWorkers.forEach(w => {
+      const opt = document.createElement('option');
+      opt.value = w.id; opt.textContent = w.name;
+      dailyGroup.appendChild(opt);
+    });
+    workerSel.appendChild(dailyGroup);
+  }
+
+  workerSel.value = currentVal;
   populateSelect(document.getElementById('att-filter-project'), state.projects, 'كل المشاريع', '');
 }
 
@@ -5831,6 +5870,48 @@ document.getElementById('att-import-download-template-btn').addEventListener('cl
 let currentSettlementWorkerId = null;
 let ldTreasury = 'بنك';
 
+/* حساب مستحقات عامل (يومي أو شهري) في شهر معين بس، لعرضها في فلتر الشهر بصفحة مستحقات العمال */
+function computeWorkerDuesForMonth(workerId, month) {
+  const w = state.workers.find(w => w.id === workerId);
+  if (!w) return { daysWorked: 0, totalDue: 0, totalPaid: 0, balanceDue: 0, descriptions: [] };
+
+  const monthRecords = workerAttendanceRecords(workerId).filter(a => a.date.startsWith(month));
+  const descriptions = monthRecords.filter(a => a.description).map(a => a.description);
+
+  if (w.employmentType === 'شهري') {
+    const md = computeMonthlyDues(workerId, month);
+    let totalPaid = 0;
+    state.transactions.forEach(t => {
+      if (t.monthlySettlement && t.monthlySettlement.workerId === workerId && t.monthlySettlement.month === month) totalPaid += t.amount;
+    });
+    const daysWorked = monthRecords.filter(a => a.status === 'حاضر').length;
+    const balanceDue = Math.max(0, md.total - totalPaid);
+    return { daysWorked, totalDue: md.total, totalPaid, balanceDue, descriptions };
+  }
+
+  const totalDue = monthRecords.reduce((s, r) => s + r.totalDue, 0);
+  let totalPaid = 0;
+  monthRecords.forEach(r => { totalPaid += attendancePaidAmount(r.id); });
+  const balanceDue = Math.max(0, totalDue - totalPaid);
+  return { daysWorked: monthRecords.length, totalDue, totalPaid, balanceDue, descriptions };
+}
+
+function populateLaborDuesMonthFilter() {
+  const monthSel = document.getElementById('ld-filter-month');
+  const currentVal = monthSel.value;
+  const allMonths = new Set();
+  state.attendance.forEach(a => allMonths.add(a.date.slice(0, 7)));
+  const sortedMonths = [...allMonths].sort((a, b) => b.localeCompare(a));
+
+  monthSel.innerHTML = '<option value="">كل الشهور (الإجمالي الكامل)</option>';
+  sortedMonths.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = formatArabicMonthYear(m);
+    monthSel.appendChild(opt);
+  });
+  monthSel.value = currentVal;
+}
+
 function renderLaborDuesPage() {
   document.getElementById('ld-active-count').textContent = activeWorkers().length;
 
@@ -5846,16 +5927,21 @@ function renderLaborDuesPage() {
   const tbody = document.getElementById('ld-table-body');
   tbody.innerHTML = '';
 
+  populateLaborDuesMonthFilter();
   const nameFilter = document.getElementById('ld-filter-name').value.trim().toLowerCase();
+  const monthFilter = document.getElementById('ld-filter-month').value;
   const filteredWorkers = state.workers.filter(w => !nameFilter || w.name.toLowerCase().includes(nameFilter));
   document.getElementById('ld-empty').style.display = filteredWorkers.length === 0 ? 'block' : 'none';
 
   filteredWorkers.forEach(w => {
-    const dues = computeWorkerDues(w.id);
+    const dues = monthFilter ? computeWorkerDuesForMonth(w.id, monthFilter) : computeWorkerDues(w.id);
     const isMonthly = w.employmentType === 'شهري';
     const typeBadge = isMonthly ? '<span class="badge badge-bank">🗓️ شهري</span>' : '<span class="badge badge-mute">📅 يومي</span>';
     const tr = document.createElement('tr');
-    const advNote = dues.advancesDeductions > 0.005 ? `<br><span style="font-size:11px;color:var(--warning)">(بعد خصم ${fmt(dues.advancesDeductions)} سلف/خصومات)</span>` : '';
+    const advNote = (!monthFilter && dues.advancesDeductions > 0.005) ? `<br><span style="font-size:11px;color:var(--warning)">(بعد خصم ${fmt(dues.advancesDeductions)} سلف/خصومات)</span>` : '';
+    const descSummary = monthFilter && dues.descriptions && dues.descriptions.length > 0
+      ? dues.descriptions.slice(0, 2).join('، ') + (dues.descriptions.length > 2 ? ` (+${dues.descriptions.length - 2})` : '')
+      : '—';
     tr.innerHTML = `
       <td>${w.name}</td>
       <td>${w.role || '—'}</td>
@@ -5864,6 +5950,7 @@ function renderLaborDuesPage() {
       <td class="text-left num">${fmt(dues.totalDue)}</td>
       <td class="text-left num" style="color:var(--success)">${fmt(dues.totalPaid)}</td>
       <td class="text-left num" style="font-weight:700;color:${dues.balanceDue > 0.005 ? 'var(--danger)' : 'var(--success)'}">${fmt(dues.balanceDue)}${advNote}</td>
+      <td style="font-size:12px;color:var(--ink-soft)">${escapeHtml(descSummary)}</td>
       <td></td>
     `;
     const actionCell = tr.querySelector('td:last-child');
@@ -6068,8 +6155,10 @@ document.getElementById('att-rate-edit-save-btn').addEventListener('click', () =
 });
 
 document.getElementById('ld-filter-name').addEventListener('input', renderLaborDuesPage);
+document.getElementById('ld-filter-month').addEventListener('change', renderLaborDuesPage);
 document.getElementById('ld-filter-clear').addEventListener('click', () => {
   document.getElementById('ld-filter-name').value = '';
+  document.getElementById('ld-filter-month').value = '';
   renderLaborDuesPage();
 });
 
@@ -6239,6 +6328,26 @@ function renderMonthlySettlementStats() {
   const advTotal = monthAdvDeds.filter(a => a.type === 'سلفة').reduce((s, a) => s + a.amount, 0);
   const dedTotal = monthAdvDeds.filter(a => a.type === 'خصم').reduce((s, a) => s + a.amount, 0);
   const netDue = Math.max(0, md.total - advTotal - dedTotal);
+
+  const closeStatusEl = document.getElementById('ld-monthly-close-status');
+  if (md.monthReady) {
+    const reason = isMonthEnded(month) ? 'الشهر انتهى بالفعل' : 'تم إغلاق الشهر يدويًا';
+    closeStatusEl.innerHTML = `<span style="color:var(--success)">✓ ${reason} — المرتب الأساسي مستحق</span>`;
+  } else {
+    closeStatusEl.innerHTML = `
+      <span style="color:var(--warning)">⏳ الشهر لسه شغال — المرتب الأساسي مش هيظهر مستحق لحد ما يخلص الشهر</span>
+      <button class="btn btn-sm" id="ld-monthly-force-close-btn" style="margin-right:8px">إغلاق الشهر الآن يدويًا</button>
+    `;
+    document.getElementById('ld-monthly-force-close-btn').addEventListener('click', () => {
+      if (!confirm(`هل تريد إغلاق شهر ${formatArabicMonthYear(month)} يدويًا؟ سيصبح المرتب الأساسي مستحقًا فورًا.`)) return;
+      if (!state.closedSalaryMonths[currentMonthlySettlementWorkerId]) state.closedSalaryMonths[currentMonthlySettlementWorkerId] = [];
+      state.closedSalaryMonths[currentMonthlySettlementWorkerId].push(month);
+      logAuditEvent('إغلاق شهر راتب يدويًا', `${w.name} — ${formatArabicMonthYear(month)}`);
+      saveState();
+      renderMonthlySettlementStats();
+      showToast('تم إغلاق الشهر يدويًا بنجاح');
+    });
+  }
 
   statsEl.innerHTML = `
     <div class="stat-card">
