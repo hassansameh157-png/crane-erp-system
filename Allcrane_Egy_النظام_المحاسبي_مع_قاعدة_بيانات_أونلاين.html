@@ -1423,7 +1423,7 @@
 
       <div class="card card-tight" style="margin-bottom:20px">
         <table>
-          <thead><tr><th>الاسم</th><th>الوظيفة</th><th>النوع</th><th class="text-left">أيام الحضور</th><th class="text-left">إجمالي المستحق</th><th class="text-left">مسدد</th><th class="text-left">الرصيد المفتوح</th><th>الوصف</th><th style="width:180px"></th></tr></thead>
+          <thead><tr><th>الاسم</th><th>الوظيفة</th><th>النوع</th><th class="text-left">أيام الحضور</th><th class="text-left">إجمالي المستحق</th><th class="text-left">مسدد</th><th class="text-left">الرصيد المفتوح</th><th style="width:180px"></th></tr></thead>
           <tbody id="ld-table-body"></tbody>
         </table>
         <div class="empty-state" id="ld-empty" style="display:none"><div class="icon">💰</div><p>لا يوجد عمال أو موظفين مسجلين بعد</p></div>
@@ -1628,7 +1628,7 @@
       <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px">سجل الحضور التفصيلي</p>
       <div class="card card-tight">
         <table class="mono-table">
-          <thead><tr><th>التاريخ</th><th>المشروع</th><th>الحالة</th><th class="text-left">إضافي</th><th class="text-left">بدلات</th><th class="text-left">المستحق</th><th>السداد</th></tr></thead>
+          <thead><tr><th>التاريخ</th><th>المشروع</th><th>الحالة</th><th class="text-left">إضافي</th><th class="text-left">بدلات</th><th class="text-left">المستحق</th><th>الوصف</th><th>السداد</th></tr></thead>
           <tbody id="wd-attendance-body"></tbody>
         </table>
       </div>
@@ -5873,10 +5873,9 @@ let ldTreasury = 'بنك';
 /* حساب مستحقات عامل (يومي أو شهري) في شهر معين بس، لعرضها في فلتر الشهر بصفحة مستحقات العمال */
 function computeWorkerDuesForMonth(workerId, month) {
   const w = state.workers.find(w => w.id === workerId);
-  if (!w) return { daysWorked: 0, totalDue: 0, totalPaid: 0, balanceDue: 0, descriptions: [] };
+  if (!w) return { daysWorked: 0, totalDue: 0, totalPaid: 0, balanceDue: 0 };
 
   const monthRecords = workerAttendanceRecords(workerId).filter(a => a.date.startsWith(month));
-  const descriptions = monthRecords.filter(a => a.description).map(a => a.description);
 
   if (w.employmentType === 'شهري') {
     const md = computeMonthlyDues(workerId, month);
@@ -5885,15 +5884,17 @@ function computeWorkerDuesForMonth(workerId, month) {
       if (t.monthlySettlement && t.monthlySettlement.workerId === workerId && t.monthlySettlement.month === month) totalPaid += t.amount;
     });
     const daysWorked = monthRecords.filter(a => a.status === 'حاضر').length;
+    // الإجمالي الكامل المتوقع للشهر (المرتب الأساسي + البدلات) بغض النظر هل الشهر خلص أو لأ — عشان توضيح الصورة كاملة
+    const fullExpectedTotal = w.monthlySalary + md.extras;
     const balanceDue = Math.max(0, md.total - totalPaid);
-    return { daysWorked, totalDue: md.total, totalPaid, balanceDue, descriptions };
+    return { daysWorked, totalDue: fullExpectedTotal, totalPaid, balanceDue, monthReady: md.monthReady };
   }
 
   const totalDue = monthRecords.reduce((s, r) => s + r.totalDue, 0);
   let totalPaid = 0;
   monthRecords.forEach(r => { totalPaid += attendancePaidAmount(r.id); });
   const balanceDue = Math.max(0, totalDue - totalPaid);
-  return { daysWorked: monthRecords.length, totalDue, totalPaid, balanceDue, descriptions };
+  return { daysWorked: monthRecords.length, totalDue, totalPaid, balanceDue, monthReady: true };
 }
 
 function populateLaborDuesMonthFilter() {
@@ -5939,18 +5940,15 @@ function renderLaborDuesPage() {
     const typeBadge = isMonthly ? '<span class="badge badge-bank">🗓️ شهري</span>' : '<span class="badge badge-mute">📅 يومي</span>';
     const tr = document.createElement('tr');
     const advNote = (!monthFilter && dues.advancesDeductions > 0.005) ? `<br><span style="font-size:11px;color:var(--warning)">(بعد خصم ${fmt(dues.advancesDeductions)} سلف/خصومات)</span>` : '';
-    const descSummary = monthFilter && dues.descriptions && dues.descriptions.length > 0
-      ? dues.descriptions.slice(0, 2).join('، ') + (dues.descriptions.length > 2 ? ` (+${dues.descriptions.length - 2})` : '')
-      : '—';
+    const monthNotReadyNote = (monthFilter && isMonthly && !dues.monthReady) ? `<br><span style="font-size:11px;color:var(--warning)">(الشهر لسه شغال — المرتب الأساسي هيظهر مستحق بعد ما يخلص)</span>` : '';
     tr.innerHTML = `
       <td>${w.name}</td>
       <td>${w.role || '—'}</td>
       <td>${typeBadge}</td>
       <td class="text-left num">${dues.daysWorked}</td>
-      <td class="text-left num">${fmt(dues.totalDue)}</td>
+      <td class="text-left num">${fmt(dues.totalDue)}${monthNotReadyNote}</td>
       <td class="text-left num" style="color:var(--success)">${fmt(dues.totalPaid)}</td>
       <td class="text-left num" style="font-weight:700;color:${dues.balanceDue > 0.005 ? 'var(--danger)' : 'var(--success)'}">${fmt(dues.balanceDue)}${advNote}</td>
-      <td style="font-size:12px;color:var(--ink-soft)">${escapeHtml(descSummary)}</td>
       <td></td>
     `;
     const actionCell = tr.querySelector('td:last-child');
@@ -6876,6 +6874,7 @@ function renderWorkerDetail() {
       <td class="text-left num">${a.overtimeHours || 0}</td>
       <td class="text-left num">${fmt(a.allowance || 0)}</td>
       <td class="text-left num" style="font-weight:700">${fmt(a.totalDue)}</td>
+      <td style="font-size:12px;color:var(--ink-soft)">${a.description ? escapeHtml(a.description) : '—'}</td>
       <td>${payBadge}</td>
     `;
     tbody.appendChild(tr);
