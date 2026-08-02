@@ -920,6 +920,7 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
               <div><span style="color:var(--ink-mute)">تاريخ البداية:</span> <b id="pd-meta-start">—</b></div>
               <div><span style="color:var(--ink-mute)">تاريخ النهاية المتوقع:</span> <b id="pd-meta-end">—</b></div>
+              <div><span style="color:var(--ink-mute)">العميل المرتبط:</span> <b id="pd-meta-customer">— بدون ربط —</b></div>
             </div>
           </div>
           <div id="pd-meta-form" style="display:none">
@@ -946,6 +947,10 @@
                 <label>تاريخ النهاية المتوقع</label>
                 <input type="date" id="pd-meta-end-input">
               </div>
+            </div>
+            <div class="field">
+              <label>العميل المرتبط بهذا المشروع (اختياري)</label>
+              <select id="pd-meta-customer-input"><option value="">— بدون ربط —</option></select>
             </div>
             <div style="display:flex;justify-content:flex-end;gap:8px">
               <button class="btn" id="pd-meta-cancel-btn">إلغاء</button>
@@ -2136,6 +2141,54 @@
 
 <!-- ============ نافذة تعديل حركة مسحوبة من سجل الحركات (شراكة كابيتال واي) ============ -->
 <!-- ============ نافذة تفاصيل حركات مجمعة (حساب + شهر) ============ -->
+<!-- ============ نافذة تعديل سطر حضور كامل ============ -->
+<div id="att-edit-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9700;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="width:100%;max-width:480px;max-height:88vh;overflow-y:auto">
+    <p style="font-weight:700;font-size:15px;margin:0 0 16px">تعديل يوم حضور</p>
+    <div class="form-grid" style="margin-bottom:12px">
+      <div class="field">
+        <label>التاريخ</label>
+        <input type="date" id="att-edit-date">
+      </div>
+      <div class="field">
+        <label>المشروع</label>
+        <select id="att-edit-project"></select>
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:12px">
+      <div class="field">
+        <label>حالة الحضور</label>
+        <select id="att-edit-status">
+          <option value="حاضر">حاضر</option>
+          <option value="غائب">غائب</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>ساعات إضافي</label>
+        <input type="number" id="att-edit-overtime" min="0" step="0.5">
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:12px">
+      <div class="field">
+        <label>بدلات</label>
+        <input type="number" id="att-edit-allowance" min="0" step="0.01">
+      </div>
+      <div class="field">
+        <label>المستحق (سيُعاد حسابه تلقائيًا عند الحفظ)</label>
+        <input type="text" id="att-edit-due-preview" disabled style="background:var(--surface-2);font-weight:700">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:16px">
+      <label>الوصف (اشتغل إيه)</label>
+      <input type="text" id="att-edit-description">
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn" id="att-edit-cancel-btn">إلغاء</button>
+      <button class="btn btn-primary" id="att-edit-save-btn">حفظ التعديلات</button>
+    </div>
+  </div>
+</div>
+
 <div id="partnership-group-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9700;align-items:center;justify-content:center;padding:16px">
   <div class="card" style="width:100%;max-width:560px;max-height:82vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -2410,6 +2463,7 @@ function migrateState(s) {
   if (!s.assets) s.assets = [];
   if (!s.partnerships) s.partnerships = [];
   if (!s.auditLog) s.auditLog = [];
+  if (!s.projectCustomerLinks) s.projectCustomerLinks = {};
   // كل العمال الحاليين (قبل إضافة نظام الموظفين الشهريين) بيبقوا "يومي" افتراضيًا عشان مفيش تغيير في سلوكهم
   s.workers.forEach(w => {
     if (!w.employmentType) w.employmentType = 'يومي';
@@ -2771,6 +2825,12 @@ function customerLinkedProjects(customerName) {
     if (!projectStats[t.project]) projectStats[t.project] = { revenue: 0, expense: 0, count: 0 };
     if (t.kind === 'إيراد') projectStats[t.project].revenue += t.amount; else projectStats[t.project].expense += t.amount;
     projectStats[t.project].count += 1;
+  });
+  // نضيف كمان أي مشروع مرتبط صراحة (يدويًا) بالعميل ده، حتى لو معندوش حركات بعد
+  Object.entries(state.projectCustomerLinks).forEach(([projectName, linkedCustomer]) => {
+    if (linkedCustomer === customerName && !projectStats[projectName]) {
+      projectStats[projectName] = { revenue: 0, expense: 0, count: 0 };
+    }
   });
   return Object.entries(projectStats).map(([name, v]) => ({ name, ...v })).sort((a, b) => (b.revenue + b.expense) - (a.revenue + a.expense));
 }
@@ -3780,6 +3840,7 @@ function renderProjectDetail() {
   statusBadge.className = `badge ${PROJECT_STATUS_BADGE_CLASS[meta.status] || 'badge-success'}`;
   document.getElementById('pd-meta-start').textContent = meta.startDate ? fmtDate(meta.startDate) : 'غير محدد';
   document.getElementById('pd-meta-end').textContent = meta.expectedEndDate ? fmtDate(meta.expectedEndDate) : 'غير محدد';
+  document.getElementById('pd-meta-customer').textContent = state.projectCustomerLinks[currentProjectDetail] || '— بدون ربط —';
 
   // الميزانية مقابل المصروف الفعلي
   const budgetCard = document.getElementById('pd-budget-card');
@@ -3841,6 +3902,8 @@ function openProjectMetaForm() {
   document.getElementById('pd-meta-budget-input').value = meta.budget || '';
   document.getElementById('pd-meta-start-input').value = meta.startDate || '';
   document.getElementById('pd-meta-end-input').value = meta.expectedEndDate || '';
+  populateSelect(document.getElementById('pd-meta-customer-input'), state.customers, '— بدون ربط —', '');
+  document.getElementById('pd-meta-customer-input').value = state.projectCustomerLinks[currentProjectDetail] || '';
   document.getElementById('pd-meta-view').style.display = 'none';
   document.getElementById('pd-meta-form').style.display = 'block';
 }
@@ -3856,6 +3919,14 @@ document.getElementById('pd-meta-save-btn').addEventListener('click', () => {
   meta.budget = parseFloat(document.getElementById('pd-meta-budget-input').value) || 0;
   meta.startDate = document.getElementById('pd-meta-start-input').value || '';
   meta.expectedEndDate = document.getElementById('pd-meta-end-input').value || '';
+
+  const selectedCustomer = document.getElementById('pd-meta-customer-input').value;
+  if (selectedCustomer) {
+    state.projectCustomerLinks[currentProjectDetail] = selectedCustomer;
+  } else {
+    delete state.projectCustomerLinks[currentProjectDetail];
+  }
+
   saveState();
   showToast('تم تحديث بيانات المشروع بنجاح');
   renderProjectDetail();
@@ -5368,6 +5439,12 @@ function renderAttendanceLog() {
       <td>${payBadge}</td>
       <td></td>
     `;
+    const editBtn = document.createElement('button');
+    editBtn.className = 'icon-btn';
+    editBtn.textContent = '✏️';
+    editBtn.title = 'تعديل السطر';
+    editBtn.addEventListener('click', () => openAttendanceEditModal(a.id));
+
     const delBtn = document.createElement('button');
     delBtn.className = 'icon-btn';
     delBtn.textContent = '✕';
@@ -5380,10 +5457,100 @@ function renderAttendanceLog() {
       renderAttendanceLog();
       showToast('تم حذف يوم الحضور');
     });
+    tr.querySelector('td:last-child').appendChild(editBtn);
     tr.querySelector('td:last-child').appendChild(delBtn);
     tbody.appendChild(tr);
   });
 }
+
+/* ============ تعديل سطر حضور كامل ============ */
+let editingAttendanceId = null;
+
+function recalcAttEditDuePreview() {
+  const a = state.attendance.find(x => x.id === editingAttendanceId);
+  if (!a) return;
+  const w = state.workers.find(w => w.id === a.workerId);
+  if (!w) return;
+
+  const status = document.getElementById('att-edit-status').value;
+  const overtimeHours = parseFloat(document.getElementById('att-edit-overtime').value) || 0;
+  const allowance = parseFloat(document.getElementById('att-edit-allowance').value) || 0;
+  const isMonthly = w.employmentType === 'شهري';
+  const effectiveDailyRate = isMonthly ? 0 : w.dailyRate;
+
+  const due = attendanceDueAmount(status, effectiveDailyRate, overtimeHours, w.overtimeRate, allowance, w.employmentType);
+  document.getElementById('att-edit-due-preview').value = fmt(due);
+  return due;
+}
+
+function openAttendanceEditModal(attendanceId) {
+  const a = state.attendance.find(x => x.id === attendanceId);
+  if (!a) return;
+  const paid = attendancePaidAmount(a.id);
+  if (paid > 0.005) {
+    showToast('لا يمكن تعديل يوم حضور تم سداد جزء منه بالفعل — عدّل السداد أولًا من صفحة مستحقات العمال', true);
+    return;
+  }
+
+  editingAttendanceId = attendanceId;
+  populateSelect(document.getElementById('att-edit-project'), state.projects, '— بدون —', '');
+  document.getElementById('att-edit-date').value = a.date;
+  document.getElementById('att-edit-project').value = a.projectId;
+  document.getElementById('att-edit-status').value = a.status;
+  document.getElementById('att-edit-overtime').value = a.overtimeHours || 0;
+  document.getElementById('att-edit-allowance').value = a.allowance || 0;
+  document.getElementById('att-edit-description').value = a.description || '';
+  recalcAttEditDuePreview();
+  document.getElementById('att-edit-modal-overlay').style.display = 'flex';
+}
+
+['att-edit-status', 'att-edit-overtime', 'att-edit-allowance'].forEach(id => {
+  document.getElementById(id).addEventListener('input', recalcAttEditDuePreview);
+  document.getElementById(id).addEventListener('change', recalcAttEditDuePreview);
+});
+
+document.getElementById('att-edit-cancel-btn').addEventListener('click', () => {
+  document.getElementById('att-edit-modal-overlay').style.display = 'none';
+  editingAttendanceId = null;
+});
+
+document.getElementById('att-edit-save-btn').addEventListener('click', () => {
+  const a = state.attendance.find(x => x.id === editingAttendanceId);
+  if (!a) return;
+  const w = state.workers.find(w => w.id === a.workerId);
+  if (!w) return;
+
+  const date = document.getElementById('att-edit-date').value;
+  const project = document.getElementById('att-edit-project').value;
+  const status = document.getElementById('att-edit-status').value;
+  const overtimeHours = parseFloat(document.getElementById('att-edit-overtime').value) || 0;
+  const allowance = parseFloat(document.getElementById('att-edit-allowance').value) || 0;
+  const description = document.getElementById('att-edit-description').value.trim();
+
+  if (!date) { showToast('من فضلك حدد التاريخ', true); return; }
+  if (!project) { showToast('من فضلك اختر المشروع', true); return; }
+
+  const isMonthly = w.employmentType === 'شهري';
+  const effectiveDailyRate = isMonthly ? 0 : w.dailyRate;
+  const newDue = attendanceDueAmount(status, effectiveDailyRate, overtimeHours, w.overtimeRate, allowance, w.employmentType);
+
+  logAuditEvent('تعديل يوم حضور', `${w.name} — ${fmtDate(a.date)} → ${fmtDate(date)}، المستحق: ${fmt(a.totalDue)} → ${fmt(newDue)}`);
+
+  a.date = date;
+  a.projectId = project;
+  a.status = status;
+  a.overtimeHours = overtimeHours;
+  a.allowance = allowance;
+  a.description = description;
+  a.totalDue = newDue;
+  a.dayRate = effectiveDailyRate;
+
+  saveState();
+  document.getElementById('att-edit-modal-overlay').style.display = 'none';
+  editingAttendanceId = null;
+  renderAttendanceLog();
+  showToast('تم تحديث يوم الحضور بنجاح');
+});
 
 ['att-filter-date','att-filter-worker','att-filter-project'].forEach(id => {
   document.getElementById(id).addEventListener('input', renderAttendanceLog);
