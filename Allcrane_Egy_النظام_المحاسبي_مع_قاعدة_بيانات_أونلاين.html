@@ -17,29 +17,29 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --bg: #F6F5F1;
+    --bg: #F4F5F7;
     --surface: #FFFFFF;
-    --surface-2: #EEEBE3;
-    --border: #E1DDD2;
-    --ink: #262420;
-    --ink-soft: #6E6B60;
-    --ink-mute: #A6A296;
-    --accent: #A15C2E;
-    --accent-dark: #7C4620;
-    --accent-soft: #F3E4D4;
-    --success: #3D7A54;
-    --success-bg: #E6F1E9;
-    --danger: #B5473A;
-    --danger-bg: #FBEAE7;
-    --warning: #A67A1E;
-    --warning-bg: #FBF0DA;
-    --bank: #2E6B8A;
-    --bank-bg: #E4EEF3;
-    --custody: #7A5B9E;
-    --custody-bg: #EEE6F5;
-    --radius: 10px;
-    --radius-lg: 14px;
-    --shadow: 0 1px 2px rgba(38,36,32,0.06), 0 6px 20px rgba(38,36,32,0.05);
+    --surface-2: #F0F1F4;
+    --border: #E3E5E9;
+    --ink: #2B2E33;
+    --ink-soft: #6B7076;
+    --ink-mute: #9CA1A8;
+    --accent: #6C5CE7;
+    --accent-dark: #5546C9;
+    --accent-soft: #EEEBFC;
+    --success: #2E9E6D;
+    --success-bg: #E5F5EE;
+    --danger: #D9534F;
+    --danger-bg: #FBEAE9;
+    --warning: #E0A11C;
+    --warning-bg: #FBF2DE;
+    --bank: #3B82C4;
+    --bank-bg: #E7F1FA;
+    --custody: #8B6FCE;
+    --custody-bg: #EFEAFA;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --shadow: 0 1px 2px rgba(20,20,30,0.04), 0 4px 12px rgba(20,20,30,0.04);
     --font-display: "Cairo", "Segoe UI", Tahoma, sans-serif;
     --font-body: "Tajawal", "Segoe UI", Tahoma, sans-serif;
     --font-num: "Segoe UI", Tahoma, sans-serif;
@@ -77,10 +77,6 @@
     margin: 0;
     font-family: var(--font-body);
     background: var(--bg);
-    background-image:
-      radial-gradient(circle at 15% 0%, var(--accent-soft) 0%, transparent 35%),
-      radial-gradient(circle at 100% 30%, var(--bank-bg) 0%, transparent 30%);
-    background-attachment: fixed;
     color: var(--ink);
     font-size: 14px;
     line-height: 1.6;
@@ -93,13 +89,12 @@
 
   /* ===== Sidebar ===== */
   .sidebar {
-    width: 236px;
-    background: linear-gradient(180deg, rgba(42,36,30,0.88) 0%, rgba(30,26,22,0.92) 100%);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    padding: 22px 14px;
+    width: 224px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    padding: 20px 12px;
     flex-shrink: 0;
-    color: #EDE8DE;
+    color: var(--ink);
     position: sticky;
     top: 0;
     height: 100vh;
@@ -113,18 +108,18 @@
     filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3));
   }
   .brand-mark svg { display: block; }
-  .brand { font-size: 16px; font-weight: 800; color: #fff; margin: 0; letter-spacing: -.01em; }
-  .brand-sub { font-size: 11px; color: #A8A196; margin: 2px 0 22px 46px; }
+  .brand { font-size: 16px; font-weight: 800; color: var(--ink); margin: 0; letter-spacing: -.01em; }
+  .brand-sub { font-size: 11px; color: var(--ink-mute); margin: 2px 0 22px 46px; }
 
-  .nav-section-label { font-size: 10.5px; color: #7A7468; text-transform: uppercase; letter-spacing: .05em; margin: 16px 10px 6px; font-weight: 700; }
+  .nav-section-label { font-size: 10.5px; color: var(--ink-mute); text-transform: uppercase; letter-spacing: .05em; margin: 16px 10px 6px; font-weight: 700; }
   .nav-item {
     display: flex; align-items: center; gap: 10px;
-    padding: 9px 12px; border-radius: 9px;
-    color: #C9C3B6; cursor: pointer; margin-bottom: 2px;
+    padding: 9px 12px; border-radius: var(--radius);
+    color: var(--ink-soft); cursor: pointer; margin-bottom: 2px;
     font-size: 13.5px; transition: background .15s, color .15s; user-select: none;
   }
-  .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
-  .nav-item.active { background: var(--accent); color: #fff; font-weight: 700; }
+  .nav-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent-dark); font-weight: 700; }
   .nav-icon { width: 18px; text-align: center; opacity: .9; font-size: 14px; }
 
   /* ===== Main ===== */
@@ -176,11 +171,7 @@
 
   .card {
     background: var(--surface);
-    background: color-mix(in srgb, var(--surface) 78%, transparent);
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid var(--border);
-    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow);
     padding: 18px;
@@ -188,11 +179,7 @@
   .card-tight {
     padding: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
     background: var(--surface);
-    background: color-mix(in srgb, var(--surface) 78%, transparent);
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid var(--border);
-    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow);
   }
@@ -275,20 +262,32 @@
   .toast.error { background: var(--danger); }
 
   .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+
+  .action-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px; }
+  .action-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 16px 18px; box-shadow: var(--shadow); display: flex; flex-direction: column;
+  }
+  .action-card-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; margin: 0 0 10px; }
+  .action-card-icon { font-size: 16px; }
+  .action-card-value { font-size: 22px; font-weight: 800; margin: 0 0 2px; font-family: var(--font-num); }
+  .action-card-sub { font-size: 12px; color: var(--ink-mute); margin: 0 0 12px; }
+  .action-card-btn {
+    margin-top: auto; text-align: center; padding: 8px 12px; border: 1px solid var(--border);
+    border-radius: var(--radius); font-size: 12.5px; color: var(--ink-soft); cursor: pointer;
+    background: var(--surface); transition: background .15s, border-color .15s;
+  }
+  .action-card-btn:hover { background: var(--surface-2); border-color: var(--ink-mute); }
   .stat-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
   .stat-card {
     background: var(--surface);
-    background: color-mix(in srgb, var(--surface) 78%, transparent);
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid var(--border);
-    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
     border-radius: var(--radius-lg);
     padding: 16px 18px;
     box-shadow: var(--shadow);
-    transition: transform .15s ease, box-shadow .15s ease;
+    transition: border-color .15s ease;
   }
-  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.08), 0 12px 28px rgba(0,0,0,0.08); }
+  .stat-card:hover { border-color: var(--ink-mute); }
   .stat-label { font-size: 11.5px; color: var(--ink-mute); margin: 0 0 8px; font-weight: 600; }
   .stat-value { font-size: 22px; font-weight: 800; margin: 0; font-family: var(--font-num); }
   .stat-value.small { font-size: 17px; }
@@ -380,6 +379,7 @@
 
   @media (max-width: 900px) {
     .stat-grid { grid-template-columns: repeat(2,1fr); }
+    .action-card-grid { grid-template-columns: 1fr; }
     .form-grid { grid-template-columns: 1fr; }
     .sidebar { display: none; }
     .main { padding: 16px 16px 84px; }
@@ -468,6 +468,7 @@
     <div class="nav-item" data-page="projects-page"><span class="nav-icon">📁</span><span>المشاريع</span></div>
     <div class="nav-item" data-page="customers-page"><span class="nav-icon">🧑‍💼</span><span>العملاء</span></div>
     <div class="nav-item" data-page="treasury-page"><span class="nav-icon">🏦</span><span>الخزينة والبنك</span></div>
+    <div class="nav-item" data-page="bank-accounts-page"><span class="nav-icon">🏛️</span><span>الحسابات البنكية</span></div>
 
     <div class="nav-section-label">العمالة</div>
     <div class="nav-item" data-page="attendance-page"><span class="nav-icon">🗓️</span><span>تسجيل الحضور</span></div>
@@ -478,8 +479,7 @@
     <div class="nav-item" data-page="workers-page"><span class="nav-icon">👷</span><span>العمال</span></div>
 
     <div class="nav-section-label">التقارير</div>
-    <div class="nav-item" data-page="pl-page"><span class="nav-icon">📈</span><span>الأرباح والخسائر</span></div>
-    <div class="nav-item" data-page="accounts-page"><span class="nav-icon">🗂️</span><span>دليل الحسابات</span></div>
+    <div class="nav-item" data-page="reports-hub-page"><span class="nav-icon">📊</span><span>التقارير</span></div>
 
     <div class="nav-section-label">التخطيط المالي</div>
     <div class="nav-item" data-page="forecast-page"><span class="nav-icon">🔮</span><span>التحصيلات المتوقعة</span></div>
@@ -519,6 +519,7 @@
         <div class="nav-item mobile-drawer-item" data-page="projects-page"><span class="nav-icon">📁</span><span>المشاريع</span></div>
         <div class="nav-item mobile-drawer-item" data-page="customers-page"><span class="nav-icon">🧑‍💼</span><span>العملاء</span></div>
         <div class="nav-item mobile-drawer-item" data-page="treasury-page"><span class="nav-icon">🏦</span><span>الخزينة والبنك</span></div>
+        <div class="nav-item mobile-drawer-item" data-page="bank-accounts-page"><span class="nav-icon">🏛️</span><span>الحسابات البنكية</span></div>
         <div class="nav-item mobile-drawer-item" data-page="import-page"><span class="nav-icon">⬆️</span><span>استيراد حركات</span></div>
 
         <div class="nav-section-label">العمالة</div>
@@ -529,8 +530,7 @@
         <div class="nav-item mobile-drawer-item" data-page="workers-page"><span class="nav-icon">👷</span><span>العمال</span></div>
 
         <div class="nav-section-label">التقارير</div>
-        <div class="nav-item mobile-drawer-item" data-page="pl-page"><span class="nav-icon">📈</span><span>الأرباح والخسائر</span></div>
-        <div class="nav-item mobile-drawer-item" data-page="accounts-page"><span class="nav-icon">🗂️</span><span>دليل الحسابات</span></div>
+        <div class="nav-item mobile-drawer-item" data-page="reports-hub-page"><span class="nav-icon">📊</span><span>التقارير</span></div>
 
         <div class="nav-section-label">التخطيط المالي</div>
         <div class="nav-item mobile-drawer-item" data-page="forecast-page"><span class="nav-icon">🔮</span><span>التحصيلات المتوقعة</span></div>
@@ -613,9 +613,6 @@
           <h1 class="page-title">لوحة التحكم</h1>
           <p class="page-sub" id="dash-date-label">—</p>
         </div>
-        <div class="header-actions">
-          <button class="btn btn-primary" id="dash-new-txn-btn">+ حركة جديدة</button>
-        </div>
       </div>
 
       <div class="filter-bar">
@@ -630,7 +627,7 @@
         <button class="btn btn-sm" id="dash-period-apply" style="display:none">تطبيق</button>
       </div>
 
-      <div class="stat-grid cols-3" id="dash-stat-grid"></div>
+      <div class="action-card-grid" id="dash-action-cards"></div>
 
       <div id="forecast-dashboard-alert" style="display:none;margin-bottom:10px"></div>
       <div id="dash-alerts-section" style="margin-bottom:18px"></div>
@@ -716,6 +713,10 @@
               <div class="treasury-btn selected bank" id="treasury-bank-btn" data-treasury="بنك">🏦 بنك</div>
               <div class="treasury-btn custody" id="treasury-custody-btn" data-treasury="عهدة">💼 عهدة</div>
             </div>
+          </div>
+          <div class="field" id="txn-bank-account-field">
+            <label>الحساب البنكي</label>
+            <select id="txn-bank-account"></select>
           </div>
         </div>
 
@@ -852,6 +853,7 @@
         </div>
         <div class="header-actions">
           <div class="export-toolbar" data-export-target="projects-page"></div>
+          <button class="btn btn-primary" id="projects-add-btn">+ مشروع جديد</button>
         </div>
       </div>
       <div class="filter-bar">
@@ -1061,8 +1063,8 @@
     <div class="page" id="treasury-page">
       <div class="page-header">
         <div>
-          <h1 class="page-title">الخزينة والبنك</h1>
-          <p class="page-sub">حركة السيولة بين البنك والعهدة</p>
+          <h1 class="page-title">العهدة</h1>
+          <p class="page-sub">حركة السيولة النقدية (الكاش) والتحويلات مع البنك</p>
         </div>
         <div class="header-actions">
           <div class="export-toolbar" data-export-target="treasury-page"></div>
@@ -1070,17 +1072,13 @@
         </div>
       </div>
 
-      <div class="stat-grid cols-3">
-        <div class="stat-card">
-          <p class="stat-label">🏦 رصيد البنك الحالي</p>
-          <p class="stat-value" id="treasury-bank-balance">0.00</p>
-        </div>
+      <div class="stat-grid cols-2">
         <div class="stat-card">
           <p class="stat-label">💼 رصيد العهدة الحالي</p>
           <p class="stat-value" id="treasury-custody-balance">0.00</p>
         </div>
         <div class="stat-card">
-          <p class="stat-label">إجمالي السيولة</p>
+          <p class="stat-label">إجمالي السيولة (عهدة + كل الحسابات البنكية)</p>
           <p class="stat-value" id="treasury-total-balance">0.00</p>
         </div>
       </div>
@@ -1119,21 +1117,11 @@
       </div>
 
       <div class="tabs">
-        <div class="tab active" data-tab="bank">حركة البنك</div>
-        <div class="tab" data-tab="custody">حركة العهدة</div>
+        <div class="tab active" data-tab="custody">حركة العهدة</div>
         <div class="tab" data-tab="transfers">التحويلات اليدوية</div>
-        <div class="tab" data-tab="cashflow">تقرير التدفقات النقدية</div>
       </div>
 
-      <div id="treasury-tab-bank">
-        <div class="card card-tight">
-          <table class="mono-table">
-            <thead><tr><th>التاريخ</th><th>البيان</th><th>المشروع</th><th class="text-left">وارد</th><th class="text-left">منصرف</th></tr></thead>
-            <tbody id="treasury-bank-body"></tbody>
-          </table>
-        </div>
-      </div>
-      <div id="treasury-tab-custody" style="display:none">
+      <div id="treasury-tab-custody">
         <div class="card card-tight">
           <table class="mono-table">
             <thead><tr><th>التاريخ</th><th>البيان</th><th>المشروع</th><th class="text-left">وارد</th><th class="text-left">منصرف</th></tr></thead>
@@ -1150,41 +1138,53 @@
           <div class="empty-state" id="treasury-transfers-empty" style="display:none"><div class="icon">↔</div><p>لا توجد تحويلات يدوية بعد</p></div>
         </div>
       </div>
-      <div id="treasury-tab-cashflow" style="display:none">
-        <div class="filter-bar">
-          <label style="margin:0">من:</label>
-          <input type="date" id="cf-from-date" style="width:150px">
-          <label style="margin:0">إلى:</label>
-          <input type="date" id="cf-to-date" style="width:150px">
-          <select id="cf-group-by">
-            <option value="month">تجميع شهري</option>
-            <option value="day">تجميع يومي</option>
-          </select>
-          <button class="btn btn-sm" id="cf-apply-filter">تطبيق</button>
-          <button class="btn btn-sm" id="cf-clear-filter">كل الفترات</button>
-        </div>
+    </div>
 
-        <div class="stat-grid cols-3">
-          <div class="stat-card">
-            <p class="stat-label">إجمالي المتحصلات (داخل)</p>
-            <p class="stat-value" id="cf-total-in" style="color:var(--success)">0.00</p>
-          </div>
-          <div class="stat-card">
-            <p class="stat-label">إجمالي المدفوعات (خارج)</p>
-            <p class="stat-value" id="cf-total-out" style="color:var(--danger)">0.00</p>
-          </div>
-          <div class="stat-card">
-            <p class="stat-label">صافي التدفق النقدي</p>
-            <p class="stat-value" id="cf-net-flow">0.00</p>
-          </div>
+    <!-- ============ تقرير التدفقات النقدية (مستقل) ============ -->
+    <div class="page" id="cashflow-report-page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">تقرير التدفقات النقدية</h1>
+          <p class="page-sub">حركة النقد الداخل والخارج عبر الزمن (البنك والعهدة معًا)</p>
         </div>
+        <div class="header-actions">
+          <div class="export-toolbar" data-export-target="cashflow-report-page"></div>
+        </div>
+      </div>
 
-        <div class="card card-tight">
-          <table class="mono-table">
-            <thead><tr><th>الفترة</th><th class="text-left">متحصلات</th><th class="text-left">مدفوعات</th><th class="text-left">صافي الفترة</th><th class="text-left">الرصيد التراكمي</th></tr></thead>
-            <tbody id="cf-table-body"></tbody>
-          </table>
+      <div class="filter-bar">
+        <label style="margin:0">من:</label>
+        <input type="date" id="cf-from-date" style="width:150px">
+        <label style="margin:0">إلى:</label>
+        <input type="date" id="cf-to-date" style="width:150px">
+        <select id="cf-group-by">
+          <option value="month">تجميع شهري</option>
+          <option value="day">تجميع يومي</option>
+        </select>
+        <button class="btn btn-sm" id="cf-apply-filter">تطبيق</button>
+        <button class="btn btn-sm" id="cf-clear-filter">كل الفترات</button>
+      </div>
+
+      <div class="stat-grid cols-3">
+        <div class="stat-card">
+          <p class="stat-label">إجمالي المتحصلات (داخل)</p>
+          <p class="stat-value" id="cf-total-in" style="color:var(--success)">0.00</p>
         </div>
+        <div class="stat-card">
+          <p class="stat-label">إجمالي المدفوعات (خارج)</p>
+          <p class="stat-value" id="cf-total-out" style="color:var(--danger)">0.00</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">صافي التدفق النقدي</p>
+          <p class="stat-value" id="cf-net-flow">0.00</p>
+        </div>
+      </div>
+
+      <div class="card card-tight">
+        <table class="mono-table">
+          <thead><tr><th>الفترة</th><th class="text-left">متحصلات</th><th class="text-left">مدفوعات</th><th class="text-left">صافي الفترة</th><th class="text-left">الرصيد التراكمي</th></tr></thead>
+          <tbody id="cf-table-body"></tbody>
+        </table>
       </div>
     </div>
 
@@ -2008,6 +2008,75 @@
       </div>
     </div>
 
+    <!-- ============ الحسابات البنكية ============ -->
+    <div class="page" id="bank-accounts-page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">الحسابات البنكية</h1>
+          <p class="page-sub" id="ba-count-label">— حساب</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="ba-add-btn">+ حساب بنكي جديد</button>
+        </div>
+      </div>
+
+      <div class="stat-grid cols-3">
+        <div class="stat-card">
+          <p class="stat-label">إجمالي أرصدة الحسابات البنكية</p>
+          <p class="stat-value" id="ba-total-balance">0.00</p>
+        </div>
+      </div>
+
+      <div class="card card-tight">
+        <table>
+          <thead><tr><th>اسم الحساب</th><th>النوع</th><th class="text-left">الرصيد الافتتاحي</th><th class="text-left">الرصيد الحالي</th><th></th></tr></thead>
+          <tbody id="ba-table-body"></tbody>
+        </table>
+        <div class="empty-state" id="ba-empty" style="display:none"><div class="icon">🏦</div><p>لا توجد حسابات بنكية مسجلة بعد</p></div>
+      </div>
+    </div>
+
+    <!-- ============ تفاصيل حساب بنكي معين ============ -->
+    <div class="page" id="bank-account-detail-page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title" id="bad-account-name">—</h1>
+          <p class="page-sub" id="bad-account-sub">—</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn" id="bad-back">← رجوع للحسابات البنكية</button>
+        </div>
+      </div>
+      <div class="stat-grid cols-2">
+        <div class="stat-card">
+          <p class="stat-label">الرصيد الحالي</p>
+          <p class="stat-value" id="bad-balance">0.00</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">عدد الحركات المسجلة</p>
+          <p class="stat-value" id="bad-txn-count">0</p>
+        </div>
+      </div>
+      <div class="card card-tight">
+        <table class="mono-table">
+          <thead><tr><th>التاريخ</th><th>النوع</th><th>الحساب</th><th>المشروع</th><th>البيان</th><th class="text-left">المبلغ</th></tr></thead>
+          <tbody id="bad-txns-body"></tbody>
+        </table>
+        <div class="empty-state" id="bad-empty" style="display:none"><div class="icon">📭</div><p>لا توجد حركات على هذا الحساب بعد</p></div>
+      </div>
+    </div>
+
+    <!-- ============ مركز التقارير ============ -->
+    <div class="page" id="reports-hub-page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">التقارير</h1>
+          <p class="page-sub">كل التقارير المتاحة في السيستم في مكان واحد</p>
+        </div>
+      </div>
+      <div class="action-card-grid" id="reports-hub-grid"></div>
+    </div>
+
     <!-- ============ سجل التتبع (AUDIT LOG) ============ -->
     <div class="page" id="audit-log-page">
       <div class="page-header">
@@ -2215,6 +2284,97 @@
     <div style="display:flex;justify-content:flex-end;gap:8px">
       <button class="btn" id="att-edit-cancel-btn">إلغاء</button>
       <button class="btn btn-primary" id="att-edit-save-btn">حفظ التعديلات</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ نافذة إنشاء حساب جديد (دليل الحسابات) ============ -->
+<!-- ============ نافذة إنشاء/تعديل حساب بنكي ============ -->
+<div id="ba-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9700;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="width:100%;max-width:440px;max-height:88vh;overflow-y:auto">
+    <p style="font-weight:700;font-size:15px;margin:0 0 16px" id="ba-modal-title">حساب بنكي جديد</p>
+    <div class="field" style="margin-bottom:12px">
+      <label>اسم الحساب</label>
+      <input type="text" id="ba-name" placeholder="مثال: البنك الأهلي - حساب رئيسي">
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>نوع الحساب</label>
+      <select id="ba-type">
+        <option value="جاري">حساب جاري</option>
+        <option value="توفير">حساب توفير</option>
+        <option value="حد ائتماني">حد ائتماني</option>
+      </select>
+    </div>
+    <div class="form-grid" style="margin-bottom:16px">
+      <div class="field">
+        <label>الرصيد الافتتاحي (ج.م)</label>
+        <input type="number" id="ba-opening-balance" min="0" step="0.01" placeholder="0.00">
+      </div>
+      <div class="field">
+        <label>تاريخ الرصيد الافتتاحي</label>
+        <input type="date" id="ba-opening-date">
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn" id="ba-cancel-btn">إلغاء</button>
+      <button class="btn btn-primary" id="ba-save-btn">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div id="new-account-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9700;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="width:100%;max-width:400px">
+    <p style="font-weight:700;font-size:15px;margin:0 0 16px" id="na-modal-title">حساب إيراد جديد</p>
+    <div class="field" style="margin-bottom:16px">
+      <label>اسم الحساب</label>
+      <input type="text" id="na-name" placeholder="مثال: إيراد تأجير أوناش">
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn" id="na-cancel-btn">إلغاء</button>
+      <button class="btn btn-primary" id="na-save-btn">إنشاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ نافذة إنشاء مشروع جديد ============ -->
+<div id="new-project-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9700;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="width:100%;max-width:460px;max-height:88vh;overflow-y:auto">
+    <p style="font-weight:700;font-size:15px;margin:0 0 16px">مشروع جديد</p>
+    <div class="field" style="margin-bottom:12px">
+      <label>اسم المشروع</label>
+      <input type="text" id="np-name" placeholder="مثال: كابيتال واي">
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>العميل المرتبط (اختياري)</label>
+      <select id="np-customer"><option value="">— بدون ربط —</option></select>
+    </div>
+    <div class="form-grid" style="margin-bottom:12px">
+      <div class="field">
+        <label>الحالة</label>
+        <select id="np-status">
+          <option value="ACTIVE">نشط</option>
+          <option value="ON_HOLD">متوقف</option>
+          <option value="COMPLETED">مكتمل</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>الميزانية التقديرية (ج.م)</label>
+        <input type="number" id="np-budget" min="0" step="0.01" placeholder="0.00">
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:16px">
+      <div class="field">
+        <label>تاريخ البداية</label>
+        <input type="date" id="np-start-date">
+      </div>
+      <div class="field">
+        <label>تاريخ النهاية المتوقع</label>
+        <input type="date" id="np-end-date">
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn" id="np-cancel-btn">إلغاء</button>
+      <button class="btn btn-primary" id="np-save-btn">إنشاء المشروع</button>
     </div>
   </div>
 </div>
@@ -2495,6 +2655,21 @@ function migrateState(s) {
   if (!s.auditLog) s.auditLog = [];
   if (!s.projectCustomerLinks) s.projectCustomerLinks = {};
   if (!s.closedSalaryMonths) s.closedSalaryMonths = {};
+  if (!s.bankAccounts) {
+    // أول مرة: ننشئ حساب بنكي افتراضي واحد يمثل "البنك" الحالي بكل رصيده وحركاته القديمة
+    s.bankAccounts = [{
+      id: 'default-bank',
+      name: 'الحساب الرئيسي',
+      type: 'جاري',
+      openingBalance: (s.openingBalances && s.openingBalances.bank) || 0,
+      openingDate: (s.openingBalances && s.openingBalances.bankOpeningDate) || '',
+      createdAt: new Date().toISOString().slice(0, 10)
+    }];
+  }
+  // أي حركة بنكية قديمة من غير حساب محدد، نربطها تلقائيًا بالحساب الافتراضي عشان الاستمرارية
+  s.transactions.forEach(t => {
+    if (t.treasury === 'بنك' && !t.bankAccountId) t.bankAccountId = 'default-bank';
+  });
   // كل العمال الحاليين (قبل إضافة نظام الموظفين الشهريين) بيبقوا "يومي" افتراضيًا عشان مفيش تغيير في سلوكهم
   s.workers.forEach(w => {
     if (!w.employmentType) w.employmentType = 'يومي';
@@ -2543,6 +2718,47 @@ function getProjectMeta(projectName) {
 
 const PROJECT_STATUS_LABELS = { ACTIVE: 'نشط', ON_HOLD: 'متوقف', COMPLETED: 'مكتمل' };
 const PROJECT_STATUS_BADGE_CLASS = { ACTIVE: 'badge-success', ON_HOLD: 'badge-warning', COMPLETED: 'badge-mute' };
+
+/* ============ نافذة إنشاء مشروع جديد ============ */
+document.getElementById('projects-add-btn').addEventListener('click', () => {
+  document.getElementById('np-name').value = '';
+  populateSelect(document.getElementById('np-customer'), state.customers, '— بدون ربط —', '');
+  document.getElementById('np-status').value = 'ACTIVE';
+  document.getElementById('np-budget').value = '';
+  document.getElementById('np-start-date').value = '';
+  document.getElementById('np-end-date').value = '';
+  document.getElementById('new-project-modal-overlay').style.display = 'flex';
+});
+
+document.getElementById('np-cancel-btn').addEventListener('click', () => {
+  document.getElementById('new-project-modal-overlay').style.display = 'none';
+});
+
+document.getElementById('np-save-btn').addEventListener('click', () => {
+  const name = document.getElementById('np-name').value.trim();
+  if (!name) { showToast('من فضلك أدخل اسم المشروع', true); return; }
+  if (state.projects.includes(name)) { showToast('يوجد بالفعل مشروع بنفس الاسم', true); return; }
+
+  const customer = document.getElementById('np-customer').value;
+  const status = document.getElementById('np-status').value;
+  const budget = parseFloat(document.getElementById('np-budget').value) || 0;
+  const startDate = document.getElementById('np-start-date').value || '';
+  const endDate = document.getElementById('np-end-date').value || '';
+
+  state.projects.push(name);
+  const meta = getProjectMeta(name);
+  meta.status = status;
+  meta.budget = budget;
+  meta.startDate = startDate;
+  meta.expectedEndDate = endDate;
+  if (customer) state.projectCustomerLinks[name] = customer;
+
+  logAuditEvent('إنشاء مشروع جديد', `${name}${customer ? ' — مرتبط بعميل: ' + customer : ''}`);
+  saveState();
+  document.getElementById('new-project-modal-overlay').style.display = 'none';
+  showToast(`تم إنشاء مشروع "${name}" بنجاح`);
+  renderProjectsPage();
+});
 
 function isCostOfGoodsAccount(accountName) {
   return (state.accounts.costOfGoodsAccounts || []).includes(accountName);
@@ -2826,6 +3042,197 @@ function computeTreasuryBalance(kind) {
   return net;
 }
 
+/* حساب رصيد حساب بنكي معين بالتحديد (بدل رصيد "بنك" الإجمالي ككل) */
+function computeBankAccountBalance(accountId) {
+  const account = state.bankAccounts.find(a => a.id === accountId);
+  if (!account) return 0;
+  let net = account.openingBalance || 0;
+  state.transactions.forEach(t => {
+    if (t.treasury !== 'بنك') return;
+    if ((t.bankAccountId || 'default-bank') !== accountId) return;
+    net += (t.kind === 'إيراد' ? t.amount : -t.amount);
+  });
+  // التحويلات اليدوية القديمة (بنك↔عهدة) بتأثر بس على الحساب الافتراضي حاليًا،
+  // لحد ما يتفعّل نظام التحويلات بين الحسابات البنكية المتعددة
+  if (accountId === 'default-bank') {
+    state.transfers.forEach(tr => {
+      if (tr.direction === 'bank_to_custody') net -= tr.amount;
+      else net += tr.amount;
+    });
+  }
+  return net;
+}
+
+/* =====================================================================
+   إدارة الحسابات البنكية
+   ===================================================================== */
+let editingBankAccountId = null;
+
+function renderBankAccountsPage() {
+  document.getElementById('ba-count-label').textContent = `${state.bankAccounts.length} حساب`;
+
+  let totalBalance = 0;
+  const tbody = document.getElementById('ba-table-body');
+  tbody.innerHTML = '';
+  document.getElementById('ba-empty').style.display = state.bankAccounts.length === 0 ? 'block' : 'none';
+
+  state.bankAccounts.forEach(acc => {
+    const balance = computeBankAccountBalance(acc.id);
+    totalBalance += balance;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHtml(acc.name)}</td>
+      <td><span class="badge badge-mute">${escapeHtml(acc.type || 'جاري')}</span></td>
+      <td class="text-left num">${fmt(acc.openingBalance || 0)}</td>
+      <td class="text-left num" style="font-weight:700">${fmt(balance)}</td>
+      <td></td>
+    `;
+    const actionsCell = tr.lastElementChild;
+    const viewBtn = document.createElement('button');
+    viewBtn.className = 'btn btn-sm';
+    viewBtn.textContent = 'الحركات';
+    viewBtn.style.marginLeft = '6px';
+    viewBtn.addEventListener('click', () => { currentBankAccountFilter = acc.id; navigateToPage('bank-account-detail-page'); });
+    const editBtn = document.createElement('button');
+    editBtn.className = 'icon-btn';
+    editBtn.textContent = '✏️';
+    editBtn.title = 'تعديل';
+    editBtn.addEventListener('click', () => openBankAccountModal(acc.id));
+    actionsCell.appendChild(viewBtn);
+    actionsCell.appendChild(editBtn);
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('ba-total-balance').textContent = fmt(totalBalance);
+}
+
+/* ============ تفاصيل حساب بنكي معين (الحركات الخاصة به فقط) ============ */
+let currentBankAccountFilter = null;
+
+function renderBankAccountDetailPage() {
+  const acc = state.bankAccounts.find(a => a.id === currentBankAccountFilter);
+  if (!acc) { navigateToPage('bank-accounts-page'); return; }
+
+  document.getElementById('bad-account-name').textContent = acc.name;
+  document.getElementById('bad-account-sub').textContent = `${acc.type || 'جاري'} — رصيد افتتاحي ${fmt(acc.openingBalance || 0)}`;
+
+  const balance = computeBankAccountBalance(acc.id);
+  document.getElementById('bad-balance').textContent = fmt(balance);
+
+  const accountTxns = state.transactions
+    .filter(t => t.treasury === 'بنك' && (t.bankAccountId || 'default-bank') === acc.id)
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  document.getElementById('bad-txn-count').textContent = accountTxns.length;
+
+  const tbody = document.getElementById('bad-txns-body');
+  tbody.innerHTML = '';
+  document.getElementById('bad-empty').style.display = accountTxns.length === 0 ? 'block' : 'none';
+
+  accountTxns.forEach(t => {
+    const amountColor = t.kind === 'إيراد' ? 'var(--success)' : 'var(--danger)';
+    const amountSign = t.kind === 'إيراد' ? '+' : '-';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${fmtDate(t.date)}</td>
+      <td><span class="badge ${t.kind === 'إيراد' ? 'badge-success' : 'badge-danger'}">${t.kind}</span></td>
+      <td>${escapeHtml(t.account)}</td>
+      <td>${escapeHtml(t.project)}</td>
+      <td>${escapeHtml(t.desc)}</td>
+      <td class="text-left num" style="color:${amountColor};font-weight:700">${amountSign}${fmt(t.amount)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('bad-back').addEventListener('click', () => navigateToPage('bank-accounts-page'));
+
+/* =====================================================================
+   مركز التقارير — قائمة موحّدة بكل التقارير المتاحة في السيستم
+   ===================================================================== */
+const REPORTS_HUB_ITEMS = [
+  { icon: '📈', title: 'الأرباح والخسائر', sub: 'ملخص شامل للإيرادات والمصروفات وصافي الربح', page: 'pl-page' },
+  { icon: '🗂️', title: 'دليل الحسابات', sub: 'كل حساب إيراد ومصروف مع إجمالياته', page: 'accounts-page' },
+  { icon: '💵', title: 'التدفقات النقدية', sub: 'حركة النقد الداخل والخارج عبر الزمن', page: 'cashflow-report-page' },
+  { icon: '👷', title: 'تقرير قبض العمالة', sub: 'ملخص مستحقات ومدفوعات العمال', page: 'labor-report-page' },
+  { icon: '🏗️', title: 'أصول الشركة', sub: 'قيمة الأصول والعائد السنوي المتوقع', page: 'assets-page' },
+  { icon: '🔍', title: 'سجل التتبع', sub: 'كل العمليات الحساسة، من قام بها ومتى', page: 'audit-log-page' }
+];
+
+function renderReportsHubPage() {
+  const grid = document.getElementById('reports-hub-grid');
+  grid.innerHTML = '';
+  REPORTS_HUB_ITEMS.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'action-card';
+    card.innerHTML = `
+      <p class="action-card-title"><span class="action-card-icon">${item.icon}</span>${item.title}</p>
+      <p class="action-card-sub" style="margin-top:6px">${item.sub}</p>
+      <div class="action-card-btn" style="margin-top:auto">فتح التقرير ↗</div>
+    `;
+    card.querySelector('.action-card-btn').addEventListener('click', () => navigateToPage(item.page));
+    grid.appendChild(card);
+  });
+}
+
+function openBankAccountModal(accountId) {
+  editingBankAccountId = accountId || null;
+  const modal = document.getElementById('ba-modal-overlay');
+  const title = document.getElementById('ba-modal-title');
+
+  if (accountId) {
+    const acc = state.bankAccounts.find(a => a.id === accountId);
+    if (!acc) return;
+    title.textContent = 'تعديل حساب بنكي';
+    document.getElementById('ba-name').value = acc.name;
+    document.getElementById('ba-type').value = acc.type || 'جاري';
+    document.getElementById('ba-opening-balance').value = acc.openingBalance || 0;
+    document.getElementById('ba-opening-date').value = acc.openingDate || '';
+  } else {
+    title.textContent = 'حساب بنكي جديد';
+    document.getElementById('ba-name').value = '';
+    document.getElementById('ba-type').value = 'جاري';
+    document.getElementById('ba-opening-balance').value = '';
+    document.getElementById('ba-opening-date').value = new Date().toISOString().slice(0, 10);
+  }
+  modal.style.display = 'flex';
+}
+
+document.getElementById('ba-add-btn').addEventListener('click', () => openBankAccountModal(null));
+document.getElementById('ba-cancel-btn').addEventListener('click', () => {
+  document.getElementById('ba-modal-overlay').style.display = 'none';
+  editingBankAccountId = null;
+});
+
+document.getElementById('ba-save-btn').addEventListener('click', () => {
+  const name = document.getElementById('ba-name').value.trim();
+  const type = document.getElementById('ba-type').value;
+  const openingBalance = parseFloat(document.getElementById('ba-opening-balance').value) || 0;
+  const openingDate = document.getElementById('ba-opening-date').value;
+
+  if (!name) { showToast('من فضلك أدخل اسم الحساب', true); return; }
+
+  if (editingBankAccountId) {
+    const acc = state.bankAccounts.find(a => a.id === editingBankAccountId);
+    Object.assign(acc, { name, type, openingBalance, openingDate });
+    logAuditEvent('تعديل حساب بنكي', name);
+  } else {
+    if (state.bankAccounts.some(a => a.name === name)) { showToast('يوجد حساب بنفس الاسم بالفعل', true); return; }
+    state.bankAccounts.push({
+      id: crypto.randomUUID(),
+      name, type, openingBalance, openingDate,
+      createdAt: new Date().toISOString().slice(0, 10)
+    });
+    logAuditEvent('إنشاء حساب بنكي جديد', `${name} — رصيد افتتاحي: ${fmt(openingBalance)}`);
+  }
+
+  saveState();
+  document.getElementById('ba-modal-overlay').style.display = 'none';
+  editingBankAccountId = null;
+  renderBankAccountsPage();
+  showToast('تم حفظ الحساب البنكي بنجاح');
+});
+
 function projectAgg(projectName, filters) {
   filters = filters || {};
   let revenue = 0, expense = 0;
@@ -2888,6 +3295,10 @@ const PAGE_RENDER_HOOKS = {
   'customers-page': renderCustomersPage,
   'customer-detail-page': renderCustomerDetail,
   'treasury-page': renderTreasuryPage,
+  'cashflow-report-page': renderCashFlowReport,
+  'bank-accounts-page': renderBankAccountsPage,
+  'reports-hub-page': renderReportsHubPage,
+  'bank-account-detail-page': renderBankAccountDetailPage,
   'pl-page': renderPLPage,
   'accounts-page': renderAccountsPage,
   'forecast-page': renderForecastPage,
@@ -3029,6 +3440,18 @@ function setTxnTreasury(treasury) {
   currentTxnTreasury = treasury;
   document.getElementById('treasury-bank-btn').classList.toggle('selected', treasury === 'بنك');
   document.getElementById('treasury-custody-btn').classList.toggle('selected', treasury === 'عهدة');
+  document.getElementById('txn-bank-account-field').style.display = treasury === 'بنك' ? 'block' : 'none';
+  if (treasury === 'بنك') populateBankAccountSelect(document.getElementById('txn-bank-account'));
+}
+
+function populateBankAccountSelect(selectEl, selectedId) {
+  selectEl.innerHTML = '';
+  state.bankAccounts.forEach(acc => {
+    const opt = document.createElement('option');
+    opt.value = acc.id; opt.textContent = acc.name;
+    if (acc.id === (selectedId || 'default-bank')) opt.selected = true;
+    selectEl.appendChild(opt);
+  });
 }
 
 document.getElementById('kind-revenue-btn').addEventListener('click', () => setTxnKind('إيراد'));
@@ -3102,6 +3525,9 @@ document.getElementById('txn-submit').addEventListener('click', () => {
     date, kind: currentTxnKind, account, project, customer, desc, amount,
     treasury: currentTxnTreasury, notes
   };
+  if (currentTxnTreasury === 'بنك') {
+    txn.bankAccountId = document.getElementById('txn-bank-account').value || 'default-bank';
+  }
   state.transactions.push(txn);
   state.nextTxnNo += 1;
   saveState();
@@ -3109,7 +3535,6 @@ document.getElementById('txn-submit').addEventListener('click', () => {
   resetTxnForm();
 });
 
-document.getElementById('dash-new-txn-btn').addEventListener('click', () => navigateToPage('new-txn-page'));
 document.getElementById('txns-new-btn').addEventListener('click', () => navigateToPage('new-txn-page'));
 
 /* =====================================================================
@@ -4056,11 +4481,10 @@ function renderCustomerDetail() {
    شاشة الخزينة والبنك
    ===================================================================== */
 function renderTreasuryPage() {
-  const bankBalance = computeTreasuryBalance('بنك');
   const custodyBalance = computeTreasuryBalance('عهدة');
-  document.getElementById('treasury-bank-balance').textContent = fmt(bankBalance);
+  const totalBankBalance = state.bankAccounts.reduce((s, acc) => s + computeBankAccountBalance(acc.id), 0);
   document.getElementById('treasury-custody-balance').textContent = fmt(custodyBalance);
-  document.getElementById('treasury-total-balance').textContent = fmt(bankBalance + custodyBalance);
+  document.getElementById('treasury-total-balance').textContent = fmt(custodyBalance + totalBankBalance);
 
   function renderMovesTable(kind, tbodyId) {
     const tbody = document.getElementById(tbodyId);
@@ -4068,8 +4492,8 @@ function renderTreasuryPage() {
     const rows = [];
 
     // الرصيد الافتتاحي كسطر أول
-    const openingAmt = kind === 'بنك' ? state.openingBalances.bank : state.openingBalances.custody;
-    const openingDate = kind === 'بنك' ? state.openingBalances.bankDate : state.openingBalances.custodyDate;
+    const openingAmt = state.openingBalances.custody;
+    const openingDate = state.openingBalances.custodyDate;
     rows.push({ date: openingDate, desc: 'الرصيد الافتتاحي', project: '—', amount: openingAmt, isOpening: true });
 
     state.transactions.filter(t => t.treasury === kind).forEach(t => {
@@ -4078,14 +4502,10 @@ function renderTreasuryPage() {
 
     // التحويلات اليدوية
     state.transfers.forEach(tr => {
-      if (kind === 'بنك' && tr.direction === 'bank_to_custody') {
-        rows.push({ date: tr.date, desc: tr.desc + ' (تحويل للعهدة)', project: '—', amount: -tr.amount });
-      } else if (kind === 'عهدة' && tr.direction === 'bank_to_custody') {
+      if (tr.direction === 'bank_to_custody') {
         rows.push({ date: tr.date, desc: tr.desc + ' (وارد من البنك)', project: '—', amount: tr.amount });
-      } else if (kind === 'عهدة' && tr.direction === 'custody_to_bank') {
+      } else {
         rows.push({ date: tr.date, desc: tr.desc + ' (تحويل للبنك)', project: '—', amount: -tr.amount });
-      } else if (kind === 'بنك' && tr.direction === 'custody_to_bank') {
-        rows.push({ date: tr.date, desc: tr.desc + ' (وارد من العهدة)', project: '—', amount: tr.amount });
       }
     });
 
@@ -4115,7 +4535,6 @@ function renderTreasuryPage() {
     });
   }
 
-  renderMovesTable('بنك', 'treasury-bank-body');
   renderMovesTable('عهدة', 'treasury-custody-body');
 
   // التحويلات اليدوية tab
@@ -4140,20 +4559,15 @@ function renderTreasuryPage() {
     row.querySelector('td:last-child').appendChild(delBtn);
     trBody.appendChild(row);
   });
-
-  if (document.querySelector('.tab[data-tab="cashflow"]').classList.contains('active')) {
-    renderCashFlowReport();
-  }
 }
 
 document.querySelectorAll('#treasury-page .tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('#treasury-page .tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    ['bank','custody','transfers','cashflow'].forEach(k => {
+    ['custody','transfers'].forEach(k => {
       document.getElementById(`treasury-tab-${k}`).style.display = (k === tab.dataset.tab) ? 'block' : 'none';
     });
-    if (tab.dataset.tab === 'cashflow') renderCashFlowReport();
   });
 });
 
@@ -4605,13 +5019,22 @@ document.querySelectorAll('#accounts-page .tab').forEach(tab => {
 
 document.getElementById('accounts-add-btn').addEventListener('click', () => {
   const kindLabel = currentAccountsTab === 'revenue' ? 'إيراد' : 'مصروف';
-  const name = prompt(`اسم حساب ${kindLabel} الجديد:`);
-  if (!name || !name.trim()) return;
+  document.getElementById('na-modal-title').textContent = `حساب ${kindLabel} جديد`;
+  document.getElementById('na-name').value = '';
+  document.getElementById('new-account-modal-overlay').style.display = 'flex';
+});
+document.getElementById('na-cancel-btn').addEventListener('click', () => {
+  document.getElementById('new-account-modal-overlay').style.display = 'none';
+});
+document.getElementById('na-save-btn').addEventListener('click', () => {
+  const name = document.getElementById('na-name').value.trim();
+  if (!name) { showToast('من فضلك أدخل اسم الحساب', true); return; }
   const list = currentAccountsTab === 'revenue' ? state.accounts.revenue : state.accounts.expense;
-  if (list.includes(name.trim())) { showToast('الحساب موجود بالفعل', true); return; }
-  list.push(name.trim());
+  if (list.includes(name)) { showToast('الحساب موجود بالفعل', true); return; }
+  list.push(name);
   saveState();
-  showToast(`تم إضافة حساب "${name.trim()}"`);
+  document.getElementById('new-account-modal-overlay').style.display = 'none';
+  showToast(`تم إضافة حساب "${name}"`);
   renderAccountsPage();
 });
 
@@ -4852,34 +5275,62 @@ function renderDashboard() {
   const costPctOfExpense = periodExpense > 0 ? (periodCostOfGoods / periodExpense * 100) : 0;
   const periodLabelShort = dashPeriodMode === 'all' ? '' : ' (للفترة المحددة)';
 
-  document.getElementById('dash-stat-grid').innerHTML = `
-    <div class="stat-card">
-      <p class="stat-label">صافي الربح${periodLabelShort}</p>
-      <p class="stat-value" style="color:${periodRevenue - periodExpense >= 0 ? 'var(--success)' : 'var(--danger)'}">${fmt(periodRevenue - periodExpense)}</p>
+  // بيانات مستحقات العمالة وحالتها
+  let laborOpenTotal = 0;
+  state.workers.forEach(w => { laborOpenTotal += computeWorkerDues(w.id).balanceDue; });
+
+  // التحصيلات المتوقعة المتأخرة/القريبة خلال 7 أيام
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const in7Days = new Date(); in7Days.setDate(in7Days.getDate() + 7);
+  const in7DaysStr = in7Days.toISOString().slice(0, 10);
+  const dueForecasts = state.forecasts.filter(f => !f.collected && f.dueDate <= in7DaysStr);
+
+  // عدد المشاريع الخسرانة حاليًا (كل الأوقات)
+  const losingProjectsCount = state.projects.filter(p => {
+    const agg = projectAgg(p);
+    return (agg.revenue > 0 || agg.expense > 0) && agg.profit < 0;
+  }).length;
+
+  document.getElementById('dash-action-cards').innerHTML = `
+    <div class="action-card">
+      <p class="action-card-title"><span class="action-card-icon">🏦</span>البنك</p>
+      <p class="action-card-value">${fmt(bankBalance)}</p>
+      <p class="action-card-sub">الرصيد الحالي</p>
+      <div class="action-card-btn" data-nav="treasury-page">حركة جديدة ↗</div>
     </div>
-    <div class="stat-card">
-      <p class="stat-label">إجمالي الإيرادات${periodLabelShort}</p>
-      <p class="stat-value" style="color:var(--success)">${fmt(periodRevenue)}</p>
+    <div class="action-card">
+      <p class="action-card-title"><span class="action-card-icon">👥</span>مستحقات العمالة</p>
+      <p class="action-card-value" style="color:${laborOpenTotal > 0.005 ? 'var(--danger)' : 'var(--success)'}">${fmt(laborOpenTotal)}</p>
+      <p class="action-card-sub">${activeWorkers().length} عامل نشط</p>
+      <div class="action-card-btn" data-nav="labor-dues-page">سداد ↗</div>
     </div>
-    <div class="stat-card">
-      <p class="stat-label">إجمالي المصروفات${periodLabelShort}</p>
-      <p class="stat-value" style="color:var(--danger)">${fmt(periodExpense)}</p>
+    <div class="action-card">
+      <p class="action-card-title"><span class="action-card-icon">🧾</span>حركة جديدة</p>
+      <p class="action-card-sub" style="margin-top:6px">تسجيل إيراد أو مصروف بسرعة من هنا مباشرة.</p>
+      <div class="action-card-btn" data-nav="new-txn-page" style="margin-top:auto">تسجيل ↗</div>
     </div>
-    <div class="stat-card">
-      <p class="stat-label">إجمالي السيولة (بنك + عهدة)</p>
-      <p class="stat-value">${fmt(bankBalance + custodyBalance)}</p>
+    <div class="action-card">
+      <p class="action-card-title"><span class="action-card-icon">💼</span>العهدة</p>
+      <p class="action-card-value">${fmt(custodyBalance)}</p>
+      <p class="action-card-sub">الرصيد الحالي</p>
+      <div class="action-card-btn" data-nav="treasury-page">تفاصيل ↗</div>
     </div>
-    <div class="stat-card">
-      <p class="stat-label">💰 تكاليف النشاط${periodLabelShort}</p>
-      <p class="stat-value" style="color:var(--warning)">${fmt(periodCostOfGoods)}</p>
-      <p style="font-size:11px;color:var(--ink-mute);margin:4px 0 0">${periodExpense > 0 ? `${costPctOfExpense.toFixed(0)}% من إجمالي المصروفات` : 'لا توجد مصروفات بعد'}</p>
+    <div class="action-card">
+      <p class="action-card-title"><span class="action-card-icon">⚠️</span>مشاريع خسرانة</p>
+      <p class="action-card-value" style="color:${losingProjectsCount > 0 ? 'var(--danger)' : 'var(--success)'}">${losingProjectsCount} مشروع</p>
+      <p class="action-card-sub">${losingProjectsCount > 0 ? 'تحتاج مراجعة' : 'لا يوجد حاليًا'}</p>
+      <div class="action-card-btn" data-nav="projects-page">مراجعة ↗</div>
     </div>
-    <div class="stat-card">
-      <p class="stat-label">مجمل الربح${periodLabelShort} (Gross Profit)</p>
-      <p class="stat-value" style="color:${periodGrossProfit >= 0 ? 'var(--success)' : 'var(--danger)'}">${fmt(periodGrossProfit)}</p>
-      <p style="font-size:11px;color:var(--ink-mute);margin:4px 0 0">${periodRevenue > 0 ? `هامش إجمالي ${(periodGrossProfit / periodRevenue * 100).toFixed(1)}%` : ''}</p>
+    <div class="action-card">
+      <p class="action-card-title"><span class="action-card-icon">📅</span>تحصيلات مستحقة</p>
+      <p class="action-card-value" style="color:${dueForecasts.length > 0 ? 'var(--warning)' : 'var(--success)'}">${dueForecasts.length} بند</p>
+      <p class="action-card-sub">خلال 7 أيام أو متأخرة</p>
+      <div class="action-card-btn" data-nav="forecast-page">عرض ↗</div>
     </div>
   `;
+  document.querySelectorAll('#dash-action-cards .action-card-btn').forEach(btn => {
+    btn.addEventListener('click', () => navigateToPage(btn.dataset.nav));
+  });
 
   renderDashboardAlerts();
   renderForecastDashboardAlert();
@@ -5890,8 +6341,9 @@ function computeWorkerDuesForMonth(workerId, month) {
       if (t.monthlySettlement && t.monthlySettlement.workerId === workerId && t.monthlySettlement.month === month) totalPaid += t.amount;
     });
     const daysWorked = monthRecords.filter(a => a.status === 'حاضر').length;
-    // الإجمالي الكامل المتوقع للشهر (المرتب الأساسي + البدلات) بغض النظر هل الشهر خلص أو لأ — عشان توضيح الصورة كاملة
-    const fullExpectedTotal = w.monthlySalary + md.extras;
+    // إجمالي المستحق لهذا الشهر تحديدًا = المسدد فعليًا (لو اتسدد) + المتبقي غير المسدد (لو لسه مستحق)
+    // بنفس منطق computeWorkerDues بالظبط، عشان مجموع الشهور المنفصلة يطابق دايمًا إجمالي كل الشهور مع بعض
+    const fullExpectedTotal = totalPaid + (md.isPaid ? 0 : md.total);
     const balanceDue = Math.max(0, md.total - totalPaid);
     return { daysWorked, totalDue: fullExpectedTotal, totalPaid, balanceDue, monthReady: md.monthReady };
   }
@@ -5901,6 +6353,27 @@ function computeWorkerDuesForMonth(workerId, month) {
   monthRecords.forEach(r => { totalPaid += attendancePaidAmount(r.id); });
   const balanceDue = Math.max(0, totalDue - totalPaid);
   return { daysWorked: monthRecords.length, totalDue, totalPaid, balanceDue, monthReady: true };
+}
+
+/* غلاف موحّد يتعامل مع فلتر الفترة سواء كانت "شهر معين" (2026-07) أو "سنة كاملة" (Y:2026) */
+function computeWorkerDuesForPeriod(workerId, periodValue) {
+  if (!periodValue) return null;
+
+  if (periodValue.startsWith('Y:')) {
+    const year = periodValue.slice(2);
+    const monthsInYear = Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`);
+    let daysWorked = 0, totalDue = 0, totalPaid = 0, balanceDue = 0;
+    monthsInYear.forEach(m => {
+      const md = computeWorkerDuesForMonth(workerId, m);
+      daysWorked += md.daysWorked;
+      totalDue += md.totalDue;
+      totalPaid += md.totalPaid;
+      balanceDue += md.balanceDue;
+    });
+    return { daysWorked, totalDue, totalPaid, balanceDue, monthReady: true };
+  }
+
+  return computeWorkerDuesForMonth(workerId, periodValue);
 }
 
 function populateLaborDuesNameFilter() {
@@ -5940,15 +6413,38 @@ function populateLaborDuesMonthFilter() {
   const monthSel = document.getElementById('ld-filter-month');
   const currentVal = monthSel.value;
   const allMonths = new Set();
-  state.attendance.forEach(a => allMonths.add(a.date.slice(0, 7)));
-  const sortedMonths = [...allMonths].sort((a, b) => b.localeCompare(a));
-
-  monthSel.innerHTML = '<option value="">كل الشهور (الإجمالي الكامل)</option>';
-  sortedMonths.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m; opt.textContent = formatArabicMonthYear(m);
-    monthSel.appendChild(opt);
+  const allYears = new Set();
+  state.attendance.forEach(a => {
+    allMonths.add(a.date.slice(0, 7));
+    allYears.add(a.date.slice(0, 4));
   });
+  const sortedMonths = [...allMonths].sort((a, b) => b.localeCompare(a));
+  const sortedYears = [...allYears].sort((a, b) => b.localeCompare(a));
+
+  monthSel.innerHTML = '<option value="">كل الفترات (الإجمالي الكامل)</option>';
+
+  if (sortedYears.length > 0) {
+    const yearGroup = document.createElement('optgroup');
+    yearGroup.label = 'سنة كاملة';
+    sortedYears.forEach(y => {
+      const opt = document.createElement('option');
+      opt.value = 'Y:' + y; opt.textContent = `سنة ${y}`;
+      yearGroup.appendChild(opt);
+    });
+    monthSel.appendChild(yearGroup);
+  }
+
+  if (sortedMonths.length > 0) {
+    const monthGroup = document.createElement('optgroup');
+    monthGroup.label = 'شهر معين';
+    sortedMonths.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = formatArabicMonthYear(m);
+      monthGroup.appendChild(opt);
+    });
+    monthSel.appendChild(monthGroup);
+  }
+
   monthSel.value = currentVal;
 }
 
@@ -5962,23 +6458,23 @@ function renderLaborDuesPage() {
 
   let openTotal = 0, paidTotal = 0;
   if (monthFilter) {
-    // فلتر بشهر معين: البطاقات بتعكس مستحقات ومسدد نفس الشهر ده بس
+    // فلتر بفترة معينة (شهر أو سنة كاملة): البطاقات بتعكس مستحقات ومسدد الفترة دي بس
+    const periodLabel = monthFilter.startsWith('Y:') ? `سنة ${monthFilter.slice(2)}` : formatArabicMonthYear(monthFilter);
     state.workers.forEach(w => {
-      const dues = computeWorkerDuesForMonth(w.id, monthFilter);
+      const dues = computeWorkerDuesForPeriod(w.id, monthFilter);
       openTotal += dues.balanceDue;
       paidTotal += dues.totalPaid;
     });
-    document.getElementById('ld-open-total-label').textContent = `إجمالي المستحقات المفتوحة (${formatArabicMonthYear(monthFilter)})`;
-    document.getElementById('ld-paid-month-label').textContent = `مسدد خلال (${formatArabicMonthYear(monthFilter)})`;
+    document.getElementById('ld-open-total-label').textContent = `إجمالي المستحقات المفتوحة (${periodLabel})`;
+    document.getElementById('ld-paid-month-label').textContent = `مسدد خلال (${periodLabel})`;
   } else {
-    // من غير فلتر: البطاقات بتعرض الإجمالي الكامل + مسدد الشهر الحالي (زي السلوك الأصلي)
-    const thisMonth = new Date().toISOString().slice(0, 7);
+    // من غير فلتر: البطاقات بتعرض الإجمالي الكامل المفتوح + إجمالي المسدد على مدار كل الوقت
     state.workers.forEach(w => { openTotal += computeWorkerDues(w.id).balanceDue; });
     state.transactions.forEach(t => {
-      if ((t.laborSettlement || t.monthlySettlement) && t.date.startsWith(thisMonth)) paidTotal += t.amount;
+      if (t.laborSettlement || t.monthlySettlement) paidTotal += t.amount;
     });
     document.getElementById('ld-open-total-label').textContent = 'إجمالي المستحقات المفتوحة';
-    document.getElementById('ld-paid-month-label').textContent = 'مسدد هذا الشهر';
+    document.getElementById('ld-paid-month-label').textContent = 'إجمالي المسدد (كل الأوقات)';
   }
   document.getElementById('ld-open-total').textContent = fmt(openTotal);
   document.getElementById('ld-paid-month').textContent = fmt(paidTotal);
@@ -5990,7 +6486,7 @@ function renderLaborDuesPage() {
   document.getElementById('ld-empty').style.display = filteredWorkers.length === 0 ? 'block' : 'none';
 
   filteredWorkers.forEach(w => {
-    const dues = monthFilter ? computeWorkerDuesForMonth(w.id, monthFilter) : computeWorkerDues(w.id);
+    const dues = monthFilter ? computeWorkerDuesForPeriod(w.id, monthFilter) : computeWorkerDues(w.id);
     const isMonthly = w.employmentType === 'شهري';
     const typeBadge = isMonthly ? '<span class="badge badge-bank">🗓️ شهري</span>' : '<span class="badge badge-mute">📅 يومي</span>';
     const tr = document.createElement('tr');
@@ -7161,28 +7657,37 @@ const EXPORT_DATA_PROVIDERS = {
     };
   },
   'treasury-page': () => {
-    const bankBalance = computeTreasuryBalance('بنك');
     const custodyBalance = computeTreasuryBalance('عهدة');
-    const bankRows = [];
     const custodyRows = [];
-    bankRows.push([fmtDate(state.openingBalances.bankDate), 'الرصيد الافتتاحي', '—', state.openingBalances.bank, '']);
     custodyRows.push([fmtDate(state.openingBalances.custodyDate), 'الرصيد الافتتاحي', '—', state.openingBalances.custody, '']);
     state.transactions.forEach(t => {
+      if (t.treasury !== 'عهدة') return;
       const amt = t.kind === 'إيراد' ? t.amount : -t.amount;
-      if (t.treasury === 'بنك') bankRows.push([fmtDate(t.date), t.desc, t.project, amt >= 0 ? amt : '', amt < 0 ? -amt : '']);
-      else custodyRows.push([fmtDate(t.date), t.desc, t.project, amt >= 0 ? amt : '', amt < 0 ? -amt : '']);
+      custodyRows.push([fmtDate(t.date), t.desc, t.project, amt >= 0 ? amt : '', amt < 0 ? -amt : '']);
     });
     state.transfers.forEach(tr => {
-      if (tr.direction === 'bank_to_custody') {
-        bankRows.push([fmtDate(tr.date), tr.desc + ' (تحويل للعهدة)', '—', '', tr.amount]);
-        custodyRows.push([fmtDate(tr.date), tr.desc + ' (وارد من البنك)', '—', tr.amount, '']);
-      }
+      if (tr.direction === 'bank_to_custody') custodyRows.push([fmtDate(tr.date), tr.desc + ' (وارد من البنك)', '—', tr.amount, '']);
+      else custodyRows.push([fmtDate(tr.date), tr.desc + ' (تحويل للبنك)', '—', '', tr.amount]);
     });
     return {
-      title: 'تقرير الخزينة والبنك',
+      title: 'تقرير العهدة',
       sections: [
-        { heading: `حركة البنك — الرصيد الحالي: ${fmt(bankBalance)} ج.م`, columns: ['التاريخ', 'البيان', 'المشروع', 'وارد', 'منصرف'], rows: bankRows },
         { heading: `حركة العهدة — الرصيد الحالي: ${fmt(custodyBalance)} ج.م`, columns: ['التاريخ', 'البيان', 'المشروع', 'وارد', 'منصرف'], rows: custodyRows }
+      ]
+    };
+  },
+  'cashflow-report-page': () => {
+    const from = document.getElementById('cf-from-date').value;
+    const to = document.getElementById('cf-to-date').value;
+    const rows = [];
+    document.querySelectorAll('#cf-table-body tr').forEach(tr => {
+      const cells = [...tr.querySelectorAll('td')].map(td => td.textContent);
+      rows.push(cells);
+    });
+    return {
+      title: `تقرير التدفقات النقدية${from || to ? ` (${from ? fmtDate(from) : '—'} إلى ${to ? fmtDate(to) : '—'})` : ''}`,
+      sections: [
+        { heading: null, columns: ['الفترة', 'متحصلات', 'مدفوعات', 'صافي الفترة', 'الرصيد التراكمي'], rows }
       ]
     };
   },
@@ -7407,11 +7912,30 @@ const EXPORT_DATA_PROVIDERS = {
 
     const filteredTotalDue = filteredRecords.reduce((s, r) => s + r.totalDue, 0);
     const filteredTotalPaid = filteredRecords.reduce((s, r) => s + attendancePaidAmount(r.id), 0);
+    const remainingAfterPaid = Math.max(0, filteredTotalDue - filteredTotalPaid);
+
+    // مواعيد الدفعات الفعلية (تواريخ السداد الحقيقية، سواء سداد يومي أو راتب شهري)
+    const paymentTxns = state.transactions
+      .filter(t => (t.laborSettlement && t.laborSettlement.workerId === w.id) || (t.monthlySettlement && t.monthlySettlement.workerId === w.id))
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
 
     return {
       title: `تقرير عامل — ${w.name} (${periodLabel})`,
       sections: [
-        { heading: `الفترة: ${periodLabel} | أيام العمل: ${filteredRecords.length} | إجمالي المستحق: ${fmt(filteredTotalDue)} | المسدد: ${fmt(filteredTotalPaid)}`, columns: [], rows: [] },
+        {
+          heading: `الفترة: ${periodLabel} | أيام العمل: ${filteredRecords.length} | إجمالي المستحق: ${fmt(filteredTotalDue)} | المسدد بالفعل: ${fmt(filteredTotalPaid)} | المتبقي بعد الخصم: ${fmt(remainingAfterPaid)}`,
+          columns: [], rows: []
+        },
+        {
+          heading: 'مواعيد الدفعات (سجل السداد الفعلي)',
+          columns: ['تاريخ الدفعة', 'النوع', 'المبلغ المدفوع', 'طريقة الدفع'],
+          rows: paymentTxns.map(t => [
+            fmtDate(t.date),
+            t.laborSettlement ? 'سداد يومي' : 'راتب شهري',
+            t.amount,
+            t.treasury
+          ])
+        },
         {
           heading: 'سجل الحضور',
           columns: ['التاريخ', 'المشروع', 'الحالة', 'ساعات إضافي', 'بدلات', 'المستحق', 'الوصف'],
