@@ -73,6 +73,27 @@
 
   * { box-sizing: border-box; }
   html, body { height: 100%; }
+
+  /* شريط تمرير واضح وسميك على جنب الشاشة، بديل أسهل من عجلة الماوس */
+  html {
+    scrollbar-width: auto;
+    scrollbar-color: var(--ink-mute) var(--surface-2);
+  }
+  ::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--surface-2);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--ink-mute);
+    border-radius: 8px;
+    border: 3px solid var(--surface-2);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-soft);
+  }
   body {
     margin: 0;
     font-family: var(--font-body);
@@ -467,8 +488,9 @@
     <div class="nav-section-label">المتابعة</div>
     <div class="nav-item" data-page="projects-page"><span class="nav-icon">📁</span><span>المشاريع</span></div>
     <div class="nav-item" data-page="customers-page"><span class="nav-icon">🧑‍💼</span><span>العملاء</span></div>
-    <div class="nav-item" data-page="treasury-page"><span class="nav-icon">🏦</span><span>الخزينة والبنك</span></div>
+    <div class="nav-item" data-page="treasury-page"><span class="nav-icon">💼</span><span>العهدة</span></div>
     <div class="nav-item" data-page="bank-accounts-page"><span class="nav-icon">🏛️</span><span>الحسابات البنكية</span></div>
+    <div class="nav-item" data-page="accounts-page"><span class="nav-icon">🗂️</span><span>دليل الحسابات</span></div>
 
     <div class="nav-section-label">العمالة</div>
     <div class="nav-item" data-page="attendance-page"><span class="nav-icon">🗓️</span><span>تسجيل الحضور</span></div>
@@ -479,10 +501,12 @@
     <div class="nav-item" data-page="workers-page"><span class="nav-icon">👷</span><span>العمال</span></div>
 
     <div class="nav-section-label">التقارير</div>
+    <div class="nav-item" data-page="pl-page"><span class="nav-icon">📈</span><span>الأرباح والخسائر</span></div>
     <div class="nav-item" data-page="reports-hub-page"><span class="nav-icon">📊</span><span>التقارير</span></div>
 
     <div class="nav-section-label">التخطيط المالي</div>
     <div class="nav-item" data-page="forecast-page"><span class="nav-icon">🔮</span><span>التحصيلات المتوقعة</span></div>
+    <div class="nav-item" data-page="payables-page"><span class="nav-icon">📋</span><span>دفعات واجبة السداد</span></div>
     <div class="nav-item" data-page="calendar-page"><span class="nav-icon">📅</span><span>التقويم</span></div>
     <div class="nav-item" data-page="assets-page"><span class="nav-icon">🏗️</span><span>أصول الشركة</span></div>
     <div class="nav-item" data-page="pricing-page"><span class="nav-icon">🧮</span><span>حاسبة التسعير</span></div>
@@ -518,8 +542,9 @@
         <div class="nav-section-label">المتابعة</div>
         <div class="nav-item mobile-drawer-item" data-page="projects-page"><span class="nav-icon">📁</span><span>المشاريع</span></div>
         <div class="nav-item mobile-drawer-item" data-page="customers-page"><span class="nav-icon">🧑‍💼</span><span>العملاء</span></div>
-        <div class="nav-item mobile-drawer-item" data-page="treasury-page"><span class="nav-icon">🏦</span><span>الخزينة والبنك</span></div>
+        <div class="nav-item mobile-drawer-item" data-page="treasury-page"><span class="nav-icon">💼</span><span>العهدة</span></div>
         <div class="nav-item mobile-drawer-item" data-page="bank-accounts-page"><span class="nav-icon">🏛️</span><span>الحسابات البنكية</span></div>
+        <div class="nav-item mobile-drawer-item" data-page="accounts-page"><span class="nav-icon">🗂️</span><span>دليل الحسابات</span></div>
         <div class="nav-item mobile-drawer-item" data-page="import-page"><span class="nav-icon">⬆️</span><span>استيراد حركات</span></div>
 
         <div class="nav-section-label">العمالة</div>
@@ -530,10 +555,12 @@
         <div class="nav-item mobile-drawer-item" data-page="workers-page"><span class="nav-icon">👷</span><span>العمال</span></div>
 
         <div class="nav-section-label">التقارير</div>
+        <div class="nav-item mobile-drawer-item" data-page="pl-page"><span class="nav-icon">📈</span><span>الأرباح والخسائر</span></div>
         <div class="nav-item mobile-drawer-item" data-page="reports-hub-page"><span class="nav-icon">📊</span><span>التقارير</span></div>
 
         <div class="nav-section-label">التخطيط المالي</div>
         <div class="nav-item mobile-drawer-item" data-page="forecast-page"><span class="nav-icon">🔮</span><span>التحصيلات المتوقعة</span></div>
+        <div class="nav-item mobile-drawer-item" data-page="payables-page"><span class="nav-icon">📋</span><span>دفعات واجبة السداد</span></div>
         <div class="nav-item mobile-drawer-item" data-page="calendar-page"><span class="nav-icon">📅</span><span>التقويم</span></div>
         <div class="nav-item mobile-drawer-item" data-page="assets-page"><span class="nav-icon">🏗️</span><span>أصول الشركة</span></div>
         <div class="nav-item mobile-drawer-item" data-page="pricing-page"><span class="nav-icon">🧮</span><span>حاسبة التسعير</span></div>
@@ -819,14 +846,9 @@
           </div>
         </div>
 
-        <div id="import-new-entities-note" style="display:none;margin-bottom:14px">
-          <div class="alert-card info">
-            <span class="alert-icon">ℹ️</span>
-            <div class="alert-body">
-              <p class="alert-title">عناصر جديدة هيتم إضافتها تلقائيًا</p>
-              <p class="alert-desc" id="import-new-entities-detail"></p>
-            </div>
-          </div>
+        <div id="import-mapping-section" style="display:none;margin-bottom:16px">
+          <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px">⚠️ القيم دي مش موجودة في السيستم — اختر لكل واحدة إما تضيفها كجديدة أو تربطها بقيمة موجودة فعلًا (يمنع تكرار بسبب أخطاء إملائية)</p>
+          <div class="card" id="import-mapping-list"></div>
         </div>
 
         <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px">معاينة الصفوف (أول 50 صف)</p>
@@ -863,6 +885,11 @@
           <option value="ACTIVE">نشط</option>
           <option value="ON_HOLD">متوقف</option>
           <option value="COMPLETED">مكتمل</option>
+        </select>
+        <select id="projects-filter-profitability">
+          <option value="">كل المشاريع (رابح وخسران)</option>
+          <option value="profitable">رابحة فقط</option>
+          <option value="losing">خسرانة فقط</option>
         </select>
         <label style="margin:0">من:</label>
         <input type="date" id="projects-from-date" style="width:150px">
@@ -1122,6 +1149,10 @@
       </div>
 
       <div id="treasury-tab-custody">
+        <div class="filter-bar">
+          <select id="treasury-custody-filter-period"><option value="">كل الفترات</option></select>
+          <button class="btn btn-sm" id="treasury-custody-filter-clear">إعادة تعيين</button>
+        </div>
         <div class="card card-tight">
           <table class="mono-table">
             <thead><tr><th>التاريخ</th><th>البيان</th><th>المشروع</th><th class="text-left">وارد</th><th class="text-left">منصرف</th></tr></thead>
@@ -1335,8 +1366,8 @@
         <p style="font-weight:700;font-size:14px;margin:0 0 10px">الأعمدة المطلوبة في الملف</p>
         <p style="font-size:12.5px;color:var(--ink-soft);line-height:2;margin:0 0 16px">
           الملف لازم يحتوي على الأعمدة دي بالترتيب (بعناوين في الصف الأول):<br>
-          <b>التاريخ</b> (بصيغة YYYY-MM-DD أو DD/MM/YYYY) — <b>كود العامل</b> (أو اسمه بالظبط) — <b>المشروع</b> — <b>الحالة</b> (حاضر أو غائب) — <b>ساعات إضافي</b> (اختياري) — <b>بدلات</b> (اختياري) — <b>الوصف</b> (اختياري)<br>
-          العامل لازم يكون مسجّل بالفعل في صفحة "العمالة" قبل الاستيراد — العمال الغير معروفين هيظهروا كصفوف بها مشاكل.<br>
+          <b>التاريخ</b> (بصيغة YYYY-MM-DD أو DD/MM/YYYY) — <b>اسم العامل</b> — <b>المشروع</b> — <b>الحالة</b> (حاضر أو غائب) — <b>ساعات إضافي</b> (اختياري) — <b>بدلات</b> (اختياري) — <b>الوصف</b> (اختياري)<br>
+          لو اسم العامل مكتوب بشكل مختلف شوية عن السيستم، هيظهرلك اختيار تربطه يدويًا بالعامل الصح بعد رفع الملف.<br>
           المشروع الغير موجود هيتم إضافته تلقائيًا.
         </p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -1371,6 +1402,11 @@
               <p class="alert-desc" id="att-import-new-entities-detail"></p>
             </div>
           </div>
+        </div>
+
+        <div id="att-import-worker-mapping-section" style="display:none;margin-bottom:16px">
+          <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px">⚠️ الأسماء دي مش متطابقة مع أي عامل مسجّل — اختر العامل الصح لكل اسم قبل الاستيراد</p>
+          <div class="card" id="att-import-worker-mapping-list"></div>
         </div>
 
         <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px">معاينة الصفوف (أول 50 صف)</p>
@@ -1822,9 +1858,51 @@
 
       <div class="card card-tight">
         <table>
-          <thead><tr><th>اسم الحساب</th><th id="accounts-type-header" style="display:none">النوع</th><th class="text-left">عدد الحركات</th><th class="text-left">الإجمالي</th></tr></thead>
+          <thead><tr><th>اسم الحساب</th><th id="accounts-type-header" style="display:none">النوع</th><th class="text-left">عدد الحركات</th><th class="text-left">الإجمالي</th><th></th></tr></thead>
           <tbody id="accounts-table-body"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- ============ تفاصيل حساب معين (كل الحركات المسجلة عليه) ============ -->
+    <div class="page" id="account-detail-page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title" id="acd-account-name">—</h1>
+          <p class="page-sub" id="acd-account-sub">—</p>
+        </div>
+        <div class="header-actions">
+          <div class="export-toolbar" data-export-target="account-detail-page"></div>
+          <button class="btn" id="acd-back">← رجوع لدليل الحسابات</button>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <label style="margin:0">من:</label>
+        <input type="date" id="acd-from-date" style="width:150px">
+        <label style="margin:0">إلى:</label>
+        <input type="date" id="acd-to-date" style="width:150px">
+        <button class="btn btn-sm" id="acd-filter-apply">تطبيق</button>
+        <button class="btn btn-sm" id="acd-filter-clear">كل الفترات</button>
+      </div>
+
+      <div class="stat-grid cols-2">
+        <div class="stat-card">
+          <p class="stat-label">إجمالي المبلغ</p>
+          <p class="stat-value" id="acd-total">0.00</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">عدد الحركات</p>
+          <p class="stat-value" id="acd-count">0</p>
+        </div>
+      </div>
+
+      <div class="card card-tight">
+        <table class="mono-table">
+          <thead><tr><th>التاريخ</th><th>البيان</th><th>المشروع</th><th>العميل</th><th class="text-left">المبلغ</th><th>الخزينة</th></tr></thead>
+          <tbody id="acd-txns-body"></tbody>
+        </table>
+        <div class="empty-state" id="acd-empty" style="display:none"><div class="icon">📭</div><p>لا توجد حركات على هذا الحساب في الفترة المحددة</p></div>
       </div>
     </div>
 
@@ -1875,6 +1953,56 @@
           <tbody id="forecast-table-body"></tbody>
         </table>
         <div class="empty-state" id="forecast-empty" style="display:none"><div class="icon">🔮</div><p>لا توجد تحصيلات متوقعة مسجلة بعد</p></div>
+      </div>
+    </div>
+
+    <!-- ============ دفعات واجبة السداد ============ -->
+    <div class="page" id="payables-page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">دفعات واجبة السداد</h1>
+          <p class="page-sub" id="payables-count-label">— بند</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="payables-add-btn">+ إضافة دفعة واجبة السداد</button>
+        </div>
+      </div>
+
+      <p style="font-size:12.5px;color:var(--ink-soft);background:var(--accent-soft);padding:10px 14px;border-radius:8px;margin:0 0 16px">
+        💡 دي أداة متابعة وتذكير فقط — إضافة بند هنا لا تنشئ أي حركة مالية تلقائيًا ولا تؤثر على أي حساب. لما تسدد المبلغ فعليًا، سجّله يدويًا في "حركة جديدة" كالمعتاد، وحدّد البند هنا كـ"تم السداد" (هيتشطب بس يفضل ظاهر للمرجعية).
+      </p>
+
+      <div class="stat-grid cols-3">
+        <div class="stat-card">
+          <p class="stat-label">إجمالي الواجب سداده (لم يُسدَّد بعد)</p>
+          <p class="stat-value" id="payables-total-pending" style="color:var(--accent)">0.00</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">⚠️ متأخر (تجاوز تاريخ الاستحقاق)</p>
+          <p class="stat-value" id="payables-total-overdue" style="color:var(--danger)">0.00</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">مستحق خلال 7 أيام القادمة</p>
+          <p class="stat-value" id="payables-total-upcoming" style="color:var(--warning)">0.00</p>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <select id="payables-filter-status">
+          <option value="">كل الحالات</option>
+          <option value="pending">لم يُسدَّد بعد</option>
+          <option value="overdue">متأخر</option>
+          <option value="paid">تم السداد</option>
+        </select>
+        <button class="btn btn-sm" id="payables-filter-clear">إعادة تعيين</button>
+      </div>
+
+      <div class="card card-tight">
+        <table>
+          <thead><tr><th style="width:40px"></th><th>الوصف</th><th>الجهة الدائنة</th><th>تاريخ الاستحقاق</th><th class="text-left">المبلغ</th><th>الحالة</th><th></th></tr></thead>
+          <tbody id="payables-table-body"></tbody>
+        </table>
+        <div class="empty-state" id="payables-empty" style="display:none"><div class="icon">📋</div><p>لا توجد دفعات واجبة السداد مسجلة بعد</p></div>
       </div>
     </div>
 
@@ -2057,6 +2185,10 @@
           <p class="stat-value" id="bad-txn-count">0</p>
         </div>
       </div>
+      <div class="filter-bar">
+        <select id="bad-filter-period"><option value="">كل الفترات</option></select>
+        <button class="btn btn-sm" id="bad-filter-clear">إعادة تعيين</button>
+      </div>
       <div class="card card-tight">
         <table class="mono-table">
           <thead><tr><th>التاريخ</th><th>النوع</th><th>الحساب</th><th>المشروع</th><th>البيان</th><th class="text-left">المبلغ</th></tr></thead>
@@ -2101,6 +2233,12 @@
         </table>
         <div class="empty-state" id="audit-log-empty" style="display:none"><div class="icon">🔍</div><p>لا توجد عمليات مسجلة بعد</p></div>
       </div>
+
+      <div class="page-header" style="margin-top:28px;margin-bottom:10px">
+        <p style="font-weight:700;font-size:14px;margin:0">فحص تطابق البيانات</p>
+        <button class="btn btn-sm" id="audit-run-integrity-check">تشغيل الفحص</button>
+      </div>
+      <div id="audit-integrity-results"></div>
     </div>
 
     <!-- ============ شراكة كابيتال واي ============ -->
@@ -2465,6 +2603,38 @@
   </div>
 </div>
 
+<div id="payables-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9800;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="width:100%;max-width:440px;max-height:88vh;overflow-y:auto">
+    <p style="font-weight:700;font-size:15px;margin:0 0 16px" id="payables-modal-title">إضافة دفعة واجبة السداد</p>
+    <div class="field" style="margin-bottom:12px">
+      <label>الوصف</label>
+      <input type="text" id="payables-desc" placeholder="مثال: فاتورة مورد قطع غيار">
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>الجهة الدائنة (اسم المورد أو أي وصف حر)</label>
+      <input type="text" id="payables-source" placeholder="مثال: شركة كذا للتوريدات">
+    </div>
+    <div class="form-grid" style="margin-bottom:12px">
+      <div class="field">
+        <label>المبلغ الواجب سداده</label>
+        <input type="number" id="payables-amount" min="0" step="0.01">
+      </div>
+      <div class="field">
+        <label>تاريخ الاستحقاق</label>
+        <input type="date" id="payables-due-date">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:16px">
+      <label>ملاحظات (اختياري)</label>
+      <input type="text" id="payables-notes" placeholder="أي تفاصيل إضافية">
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn" id="payables-modal-cancel-btn">إلغاء</button>
+      <button class="btn btn-primary" id="payables-modal-save-btn">حفظ</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ نافذة إضافة/تعديل أصل ============ -->
 <div id="asset-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9800;align-items:center;justify-content:center;padding:16px">
   <div class="card" style="width:100%;max-width:460px;max-height:88vh;overflow-y:auto">
@@ -2650,6 +2820,7 @@ function migrateState(s) {
   if (!s.nextWorkerNo) s.nextWorkerNo = (s.workers.length || 0) + 1;
   if (!s.advancesDeductions) s.advancesDeductions = [];
   if (!s.forecasts) s.forecasts = [];
+  if (!s.payables) s.payables = [];
   if (!s.assets) s.assets = [];
   if (!s.partnerships) s.partnerships = [];
   if (!s.auditLog) s.auditLog = [];
@@ -2847,6 +3018,27 @@ function logAuditEvent(action, details) {
 }
 
 let cloudSaveTimer = null;
+/* إعادة ترقيم كل الحركات بترتيب التاريخ الفعلي (مش وقت الإدخال) — تُستدعى بعد أي إضافة حركة جديدة أو تعديل تاريخ حركة موجودة */
+function renumberAllTransactionsByDate() {
+  // نرتب الحركات حسب التاريخ تصاعديًا، وعند تساوي التاريخ نحافظ على ترتيب الإدخال الأصلي (استقرار الترتيب)
+  const sorted = [...state.transactions]
+    .map((t, originalIndex) => ({ t, originalIndex }))
+    .sort((a, b) => {
+      if (a.t.date < b.t.date) return -1;
+      if (a.t.date > b.t.date) return 1;
+      return a.originalIndex - b.originalIndex;
+    });
+
+  sorted.forEach((entry, i) => {
+    const newSeq = i + 1;
+    entry.t.seq = newSeq;
+    entry.t.id = 'TXN-' + String(newSeq).padStart(4, '0');
+  });
+
+  // نحدّث العداد العام عشان أي حركة جديدة بعد كده تاخد رقم أكبر من أي رقم موجود حاليًا
+  state.nextTxnNo = sorted.length + 1;
+}
+
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   // نأجل الحفظ السحابي شوية عشان لو المستخدم بيعمل تعديلات سريعة متتالية
@@ -3119,8 +3311,41 @@ function renderBankAccountDetailPage() {
   const balance = computeBankAccountBalance(acc.id);
   document.getElementById('bad-balance').textContent = fmt(balance);
 
-  const accountTxns = state.transactions
-    .filter(t => t.treasury === 'بنك' && (t.bankAccountId || 'default-bank') === acc.id)
+  // نملأ فلتر الفترة (شهر/سنة) بناءً على تواريخ حركات الحساب ده تحديدًا
+  const periodSel = document.getElementById('bad-filter-period');
+  const currentPeriodVal = periodSel.value;
+  const allAccountTxnsUnfiltered = state.transactions.filter(t => t.treasury === 'بنك' && (t.bankAccountId || 'default-bank') === acc.id);
+  const allMonths = new Set(), allYears = new Set();
+  allAccountTxnsUnfiltered.forEach(t => { allMonths.add(t.date.slice(0, 7)); allYears.add(t.date.slice(0, 4)); });
+  const sortedMonths = [...allMonths].sort((a, b) => b.localeCompare(a));
+  const sortedYears = [...allYears].sort((a, b) => b.localeCompare(a));
+
+  periodSel.innerHTML = '<option value="">كل الفترات</option>';
+  if (sortedYears.length > 0) {
+    const yearGroup = document.createElement('optgroup');
+    yearGroup.label = 'سنة كاملة';
+    sortedYears.forEach(y => {
+      const opt = document.createElement('option');
+      opt.value = 'Y:' + y; opt.textContent = `سنة ${y}`;
+      yearGroup.appendChild(opt);
+    });
+    periodSel.appendChild(yearGroup);
+  }
+  if (sortedMonths.length > 0) {
+    const monthGroup = document.createElement('optgroup');
+    monthGroup.label = 'شهر معين';
+    sortedMonths.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = formatArabicMonthYear(m);
+      monthGroup.appendChild(opt);
+    });
+    periodSel.appendChild(monthGroup);
+  }
+  periodSel.value = currentPeriodVal;
+
+  const periodFilter = periodSel.value;
+  const accountTxns = allAccountTxnsUnfiltered
+    .filter(t => matchesPeriodFilter(t.date, periodFilter))
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 
   document.getElementById('bad-txn-count').textContent = accountTxns.length;
@@ -3146,6 +3371,11 @@ function renderBankAccountDetailPage() {
 }
 
 document.getElementById('bad-back').addEventListener('click', () => navigateToPage('bank-accounts-page'));
+document.getElementById('bad-filter-period').addEventListener('change', renderBankAccountDetailPage);
+document.getElementById('bad-filter-clear').addEventListener('click', () => {
+  document.getElementById('bad-filter-period').value = '';
+  renderBankAccountDetailPage();
+});
 
 /* =====================================================================
    مركز التقارير — قائمة موحّدة بكل التقارير المتاحة في السيستم
@@ -3301,7 +3531,9 @@ const PAGE_RENDER_HOOKS = {
   'bank-account-detail-page': renderBankAccountDetailPage,
   'pl-page': renderPLPage,
   'accounts-page': renderAccountsPage,
+  'account-detail-page': renderAccountDetailPage,
   'forecast-page': renderForecastPage,
+  'payables-page': renderPayablesPage,
   'calendar-page': renderCalendarPage,
   'assets-page': renderAssetsPage,
   'pricing-page': renderPricingPage,
@@ -3530,6 +3762,7 @@ document.getElementById('txn-submit').addEventListener('click', () => {
   }
   state.transactions.push(txn);
   state.nextTxnNo += 1;
+  renumberAllTransactionsByDate();
   saveState();
   showToast(`تم حفظ الحركة بنجاح (${currentTxnKind === 'إيراد' ? '+' : '-'}${fmt(amount)} ج.م)`);
   resetTxnForm();
@@ -3545,6 +3778,7 @@ document.getElementById('txns-new-btn').addEventListener('click', () => navigate
    حساب/مشروع/عميل جديد تلقائيًا للنظام.
    ===================================================================== */
 let importParsedRows = [];
+let importValueMappings = {}; // key: "type::originalValue" -> value: القيمة الموجودة المختارة للربط، أو '' لإضافتها كجديدة
 
 function renderImportPage() {
   importParsedRows = [];
@@ -3735,7 +3969,7 @@ function renderImportPreview() {
   document.getElementById('import-valid-rows').textContent = validRows.length;
   document.getElementById('import-error-rows').textContent = errorRows.length;
 
-  // العناصر الجديدة اللي هتتضاف تلقائيًا
+  // العناصر الجديدة اللي مش موجودة في السيستم — نعرضها للمستخدم يقرر: يضيفها جديدة أو يربطها بقيمة موجودة
   const newAccounts = new Set(), newProjects = new Set(), newCustomers = new Set();
   validRows.forEach(r => {
     const accList = r.kind === 'إيراد' ? state.accounts.revenue : state.accounts.expense;
@@ -3743,16 +3977,54 @@ function renderImportPreview() {
     if (!state.projects.includes(r.project)) newProjects.add(r.project);
     if (!state.customers.includes(r.customer)) newCustomers.add(r.customer);
   });
-  const noteEl = document.getElementById('import-new-entities-note');
+
+  const mappingSection = document.getElementById('import-mapping-section');
+  const mappingList = document.getElementById('import-mapping-list');
   const hasNew = newAccounts.size + newProjects.size + newCustomers.size > 0;
-  noteEl.style.display = hasNew ? 'block' : 'none';
-  if (hasNew) {
-    const parts = [];
-    if (newAccounts.size) parts.push(`${newAccounts.size} حساب جديد`);
-    if (newProjects.size) parts.push(`${newProjects.size} مشروع جديد`);
-    if (newCustomers.size) parts.push(`${newCustomers.size} عميل جديد`);
-    document.getElementById('import-new-entities-detail').textContent = parts.join(' — ');
+  mappingSection.style.display = hasNew ? 'block' : 'none';
+  mappingList.innerHTML = '';
+
+  function addMappingRow(value, type, existingOptions) {
+    const key = `${type}::${value}`;
+    if (!(key in importValueMappings)) importValueMappings[key] = ''; // فاضي = هيتضاف كقيمة جديدة
+
+    const row = document.createElement('div');
+    row.style.display = 'grid';
+    row.style.gridTemplateColumns = '1fr 1fr auto';
+    row.style.gap = '10px';
+    row.style.alignItems = 'center';
+    row.style.padding = '8px 0';
+    row.style.borderBottom = '1px solid var(--border)';
+
+    const typeLabel = { account: 'حساب', project: 'مشروع', customer: 'عميل' }[type];
+    row.innerHTML = `
+      <span style="font-size:13px"><b>${escapeHtml(value)}</b> <span style="color:var(--ink-mute);font-size:11.5px">(${typeLabel} جديد)</span></span>
+      <select style="width:100%"></select>
+      <span style="font-size:11px;color:var(--ink-mute)">أو أضفه كجديد</span>
+    `;
+    const select = row.querySelector('select');
+    const emptyOpt = document.createElement('option');
+    emptyOpt.value = ''; emptyOpt.textContent = '— إضافة كقيمة جديدة —';
+    select.appendChild(emptyOpt);
+    existingOptions.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt; o.textContent = `ربط بـ: ${opt}`;
+      if (importValueMappings[key] === opt) o.selected = true;
+      select.appendChild(o);
+    });
+    select.addEventListener('change', () => {
+      importValueMappings[key] = select.value;
+      renderImportPreview();
+    });
+    mappingList.appendChild(row);
   }
+
+  newAccounts.forEach(v => {
+    // نجمع كل حسابات الإيراد والمصروف كخيارات ربط محتملة
+    addMappingRow(v, 'account', [...state.accounts.revenue, ...state.accounts.expense]);
+  });
+  newProjects.forEach(v => addMappingRow(v, 'project', state.projects));
+  newCustomers.forEach(v => addMappingRow(v, 'customer', state.customers));
 
   const tbody = document.getElementById('import-preview-body');
   tbody.innerHTML = '';
@@ -3787,6 +4059,7 @@ function renderImportPreview() {
 
 document.getElementById('import-cancel-btn').addEventListener('click', () => {
   importParsedRows = [];
+  importValueMappings = {};
   document.getElementById('import-preview-section').style.display = 'none';
   document.getElementById('import-file-input').value = '';
   document.getElementById('import-file-name').textContent = '';
@@ -3801,20 +4074,29 @@ document.getElementById('import-commit-btn').addEventListener('click', () => {
   let addedAccounts = 0, addedProjects = 0, addedCustomers = 0;
 
   validRows.forEach(r => {
+    // نطبّق أي مطابقة يدوية اختارها المستخدم (تربط القيمة الجديدة بقيمة موجودة بالفعل) قبل أي حاجة تانية
+    const accountKey = `account::${r.account}`;
+    const projectKey = `project::${r.project}`;
+    const customerKey = `customer::${r.customer}`;
+    const account = (importValueMappings[accountKey]) || r.account;
+    const project = (importValueMappings[projectKey]) || r.project;
+    const customer = (importValueMappings[customerKey]) || r.customer;
+
     const accList = r.kind === 'إيراد' ? state.accounts.revenue : state.accounts.expense;
-    if (!accList.includes(r.account)) { accList.push(r.account); addedAccounts++; }
-    if (!state.projects.includes(r.project)) { state.projects.push(r.project); addedProjects++; }
-    if (!state.customers.includes(r.customer)) { state.customers.push(r.customer); addedCustomers++; }
+    if (!accList.includes(account)) { accList.push(account); addedAccounts++; }
+    if (!state.projects.includes(project)) { state.projects.push(project); addedProjects++; }
+    if (!state.customers.includes(customer)) { state.customers.push(customer); addedCustomers++; }
 
     const txn = {
       id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
       seq: state.nextTxnNo,
-      date: r.date, kind: r.kind, account: r.account, project: r.project,
-      customer: r.customer, desc: r.desc, amount: r.amount, treasury: r.treasury, notes: ''
+      date: r.date, kind: r.kind, account, project,
+      customer, desc: r.desc, amount: r.amount, treasury: r.treasury, notes: ''
     };
     state.transactions.push(txn);
     state.nextTxnNo += 1;
   });
+  renumberAllTransactionsByDate();
 
   saveState();
   showToast(`تم استيراد ${validRows.length} حركة بنجاح${addedAccounts + addedProjects + addedCustomers > 0 ? ` (${addedAccounts} حساب، ${addedProjects} مشروع، ${addedCustomers} عميل جديد أُضيفوا تلقائيًا)` : ''}`);
@@ -3913,8 +4195,10 @@ function renderTxnsTable() {
     const dateCell = cells[1];
     makeEditableInputCell(dateCell, t.date, 'date', fmtDate, (newVal) => {
       const oldVal = t.date;
+      const oldId = t.id;
       t.date = newVal;
-      logAuditEvent('تعديل تاريخ حركة', `الحركة ${t.id} (${t.desc}): من ${fmtDate(oldVal)} إلى ${fmtDate(newVal)}`);
+      renumberAllTransactionsByDate();
+      logAuditEvent('تعديل تاريخ حركة', `الحركة ${oldId} (${t.desc}): من ${fmtDate(oldVal)} إلى ${fmtDate(newVal)} — الرقم الجديد: ${t.id}`);
       saveState();
       showToast(`تم تحديث تاريخ الحركة إلى ${fmtDate(newVal)}`);
       renderTxnsTable();
@@ -4230,13 +4514,22 @@ function renderProjectsPage() {
   const to = document.getElementById('projects-to-date').value;
   const account = document.getElementById('projects-filter-account').value;
   const statusFilter = document.getElementById('projects-filter-status').value;
-  document.getElementById('projects-count-label').textContent = `${state.projects.length} مشروع` + ((from || to || account || statusFilter) ? ' (مفلترة)' : '');
+  const profitabilityFilter = document.getElementById('projects-filter-profitability').value;
+  document.getElementById('projects-count-label').textContent = `${state.projects.length} مشروع` + ((from || to || account || statusFilter || profitabilityFilter) ? ' (مفلترة)' : '');
 
   const rows = state.projects
     .map(p => ({ name: p, meta: getProjectMeta(p), ...projectAgg(p, { from, to, account }) }))
     .filter(x => !search || x.name.toLowerCase().includes(search))
     .filter(x => !account || x.revenue !== 0 || x.expense !== 0) // اخفاء المشاريع اللي معندهاش حركات على الحساب المحدد
     .filter(x => !statusFilter || x.meta.status === statusFilter)
+    .filter(x => {
+      if (!profitabilityFilter) return true;
+      const hasActivity = x.revenue > 0 || x.expense > 0;
+      if (!hasActivity) return false; // مشروع من غير أي حركات مالية مش "رابح" ولا "خسران"، نستبعده من الفلترين
+      if (profitabilityFilter === 'profitable') return x.profit >= 0;
+      if (profitabilityFilter === 'losing') return x.profit < 0;
+      return true;
+    })
     .sort((a, b) => b.profit - a.profit);
 
   const tbody = document.getElementById('projects-table-body');
@@ -4263,12 +4556,14 @@ function renderProjectsPage() {
   });
 }
 document.getElementById('projects-filter-status').addEventListener('change', renderProjectsPage);
+document.getElementById('projects-filter-profitability').addEventListener('change', renderProjectsPage);
 document.getElementById('projects-from-date').addEventListener('change', renderProjectsPage);
 document.getElementById('projects-to-date').addEventListener('change', renderProjectsPage);
 document.getElementById('projects-filter-account').addEventListener('change', renderProjectsPage);
 document.getElementById('projects-filter-clear').addEventListener('click', () => {
   document.getElementById('projects-search').value = '';
   document.getElementById('projects-filter-status').value = '';
+  document.getElementById('projects-filter-profitability').value = '';
   document.getElementById('projects-from-date').value = '';
   document.getElementById('projects-to-date').value = '';
   document.getElementById('projects-filter-account').value = '';
@@ -4480,28 +4775,73 @@ function renderCustomerDetail() {
 /* =====================================================================
    شاشة الخزينة والبنك
    ===================================================================== */
+function populateTreasuryPeriodFilter() {
+  const sel = document.getElementById('treasury-custody-filter-period');
+  const currentVal = sel.value;
+  const allMonths = new Set(), allYears = new Set();
+  state.transactions.filter(t => t.treasury === 'عهدة').forEach(t => {
+    allMonths.add(t.date.slice(0, 7));
+    allYears.add(t.date.slice(0, 4));
+  });
+  const sortedMonths = [...allMonths].sort((a, b) => b.localeCompare(a));
+  const sortedYears = [...allYears].sort((a, b) => b.localeCompare(a));
+
+  sel.innerHTML = '<option value="">كل الفترات</option>';
+  if (sortedYears.length > 0) {
+    const yearGroup = document.createElement('optgroup');
+    yearGroup.label = 'سنة كاملة';
+    sortedYears.forEach(y => {
+      const opt = document.createElement('option');
+      opt.value = 'Y:' + y; opt.textContent = `سنة ${y}`;
+      yearGroup.appendChild(opt);
+    });
+    sel.appendChild(yearGroup);
+  }
+  if (sortedMonths.length > 0) {
+    const monthGroup = document.createElement('optgroup');
+    monthGroup.label = 'شهر معين';
+    sortedMonths.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = formatArabicMonthYear(m);
+      monthGroup.appendChild(opt);
+    });
+    sel.appendChild(monthGroup);
+  }
+  sel.value = currentVal;
+}
+
+function matchesPeriodFilter(dateStr, periodValue) {
+  if (!periodValue) return true;
+  if (periodValue.startsWith('Y:')) return dateStr.startsWith(periodValue.slice(2));
+  return dateStr.startsWith(periodValue);
+}
+
 function renderTreasuryPage() {
   const custodyBalance = computeTreasuryBalance('عهدة');
   const totalBankBalance = state.bankAccounts.reduce((s, acc) => s + computeBankAccountBalance(acc.id), 0);
   document.getElementById('treasury-custody-balance').textContent = fmt(custodyBalance);
   document.getElementById('treasury-total-balance').textContent = fmt(custodyBalance + totalBankBalance);
+  populateTreasuryPeriodFilter();
+  const periodFilter = document.getElementById('treasury-custody-filter-period').value;
 
   function renderMovesTable(kind, tbodyId) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
     const rows = [];
 
-    // الرصيد الافتتاحي كسطر أول
-    const openingAmt = state.openingBalances.custody;
-    const openingDate = state.openingBalances.custodyDate;
-    rows.push({ date: openingDate, desc: 'الرصيد الافتتاحي', project: '—', amount: openingAmt, isOpening: true });
+    // الرصيد الافتتاحي يظهر بس لو مفيش فلتر فترة مطبق (لأنه مش جزء من فترة زمنية محددة)
+    if (!periodFilter) {
+      const openingAmt = state.openingBalances.custody;
+      const openingDate = state.openingBalances.custodyDate;
+      rows.push({ date: openingDate, desc: 'الرصيد الافتتاحي', project: '—', amount: openingAmt, isOpening: true });
+    }
 
-    state.transactions.filter(t => t.treasury === kind).forEach(t => {
+    state.transactions.filter(t => t.treasury === kind && matchesPeriodFilter(t.date, periodFilter)).forEach(t => {
       rows.push({ date: t.date, desc: t.desc, project: t.project, amount: t.kind === 'إيراد' ? t.amount : -t.amount });
     });
 
     // التحويلات اليدوية
-    state.transfers.forEach(tr => {
+    state.transfers.filter(tr => matchesPeriodFilter(tr.date, periodFilter)).forEach(tr => {
       if (tr.direction === 'bank_to_custody') {
         rows.push({ date: tr.date, desc: tr.desc + ' (وارد من البنك)', project: '—', amount: tr.amount });
       } else {
@@ -4528,8 +4868,11 @@ function renderTreasuryPage() {
           <td>${r.desc}</td>
           <td>${r.project}</td>
           <td class="text-left" style="color:var(--success)">${isIn ? fmt(r.amount) : ''}</td>
-          <td class="text-left" style="color:var(--danger)">${!isIn ? fmt(Math.abs(r.amount)) : ''}</td>
+        <td class="text-left"></td>
         `;
+        const dangerCell = tr.lastElementChild;
+        dangerCell.style.color = 'var(--danger)';
+        dangerCell.textContent = !isIn ? fmt(Math.abs(r.amount)) : '';
       }
       tbody.appendChild(tr);
     });
@@ -4569,6 +4912,12 @@ document.querySelectorAll('#treasury-page .tab').forEach(tab => {
       document.getElementById(`treasury-tab-${k}`).style.display = (k === tab.dataset.tab) ? 'block' : 'none';
     });
   });
+});
+
+document.getElementById('treasury-custody-filter-period').addEventListener('change', renderTreasuryPage);
+document.getElementById('treasury-custody-filter-clear').addEventListener('click', () => {
+  document.getElementById('treasury-custody-filter-period').value = '';
+  renderTreasuryPage();
 });
 
 /* ---------- فورم التحويل بين البنك والعهدة ---------- */
@@ -4976,6 +5325,54 @@ function renderAccountsPage() {
     const color = currentAccountsTab === 'revenue' ? 'var(--success)' : 'var(--danger)';
     const nameCell = document.createElement('td');
     nameCell.textContent = r.name;
+    nameCell.style.cursor = 'pointer';
+    nameCell.title = 'اضغط لتعديل اسم الحساب';
+    nameCell.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = r.name;
+      input.style.width = '100%';
+      nameCell.innerHTML = '';
+      nameCell.appendChild(input);
+      input.focus();
+      input.select();
+
+      function commitRename() {
+        const newName = input.value.trim();
+        if (!newName || newName === r.name) {
+          renderAccountsPage();
+          return;
+        }
+        if (list.includes(newName)) {
+          showToast('يوجد بالفعل حساب بهذا الاسم', true);
+          renderAccountsPage();
+          return;
+        }
+        // نحدّث اسم الحساب في القائمة نفسها
+        const idx = list.indexOf(r.name);
+        if (idx >= 0) list[idx] = newName;
+
+        // نحدّث كل الحركات القديمة اللي كانت مسجلة على الاسم القديم، عشان الربط والتقارير تفضل صحيحة
+        let updatedCount = 0;
+        state.transactions.forEach(t => {
+          if (t.account === r.name) { t.account = newName; updatedCount++; }
+        });
+        // نحدّث كمان قائمة "تكلفة مباشرة" لو الحساب ده كان معلّم عليها
+        const costIdx = state.accounts.costOfGoodsAccounts.indexOf(r.name);
+        if (costIdx >= 0) state.accounts.costOfGoodsAccounts[costIdx] = newName;
+
+        logAuditEvent('تعديل اسم حساب', `من "${r.name}" إلى "${newName}" — تم تحديث ${updatedCount} حركة`);
+        saveState();
+        showToast(`تم تعديل اسم الحساب، وتحديث ${updatedCount} حركة مرتبطة به`);
+        renderAccountsPage();
+      }
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') input.blur();
+        if (e.key === 'Escape') renderAccountsPage();
+      });
+      input.addEventListener('blur', commitRename);
+    });
     tr.appendChild(nameCell);
 
     if (isExpenseTab) {
@@ -5009,12 +5406,74 @@ function renderAccountsPage() {
     totalCell.textContent = fmt(r.total);
     tr.appendChild(totalCell);
 
+    const actionsCell = document.createElement('td');
+    const detailsBtn = document.createElement('button');
+    detailsBtn.className = 'btn btn-sm';
+    detailsBtn.textContent = 'التفاصيل';
+    detailsBtn.addEventListener('click', () => {
+      currentAccountDetailName = r.name;
+      currentAccountDetailKind = currentAccountsTab;
+      navigateToPage('account-detail-page');
+    });
+    actionsCell.appendChild(detailsBtn);
+    tr.appendChild(actionsCell);
+
     tbody.appendChild(tr);
   });
 }
 
 document.querySelectorAll('#accounts-page .tab').forEach(tab => {
   tab.addEventListener('click', () => { currentAccountsTab = tab.dataset.atab; renderAccountsPage(); });
+});
+
+/* ============ تفاصيل حساب معين (كل حركاته) ============ */
+let currentAccountDetailName = null;
+let currentAccountDetailKind = 'revenue';
+
+function renderAccountDetailPage() {
+  if (!currentAccountDetailName) { navigateToPage('accounts-page'); return; }
+
+  document.getElementById('acd-account-name').textContent = currentAccountDetailName;
+  document.getElementById('acd-account-sub').textContent = currentAccountDetailKind === 'revenue' ? 'حساب إيراد' : 'حساب مصروف';
+
+  const from = document.getElementById('acd-from-date').value;
+  const to = document.getElementById('acd-to-date').value;
+
+  const txns = state.transactions
+    .filter(t => t.account === currentAccountDetailName)
+    .filter(t => !from || t.date >= from)
+    .filter(t => !to || t.date <= to)
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  const total = txns.reduce((s, t) => s + t.amount, 0);
+  document.getElementById('acd-total').textContent = fmt(total);
+  document.getElementById('acd-count').textContent = txns.length;
+
+  const tbody = document.getElementById('acd-txns-body');
+  tbody.innerHTML = '';
+  document.getElementById('acd-empty').style.display = txns.length === 0 ? 'block' : 'none';
+
+  const amountColor = currentAccountDetailKind === 'revenue' ? 'var(--success)' : 'var(--danger)';
+  txns.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${fmtDate(t.date)}</td>
+      <td>${escapeHtml(t.desc)}</td>
+      <td>${escapeHtml(t.project)}</td>
+      <td>${escapeHtml(t.customer)}</td>
+      <td class="text-left num" style="color:${amountColor};font-weight:700">${fmt(t.amount)}</td>
+      <td>${t.treasury}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('acd-back').addEventListener('click', () => navigateToPage('accounts-page'));
+document.getElementById('acd-filter-apply').addEventListener('click', renderAccountDetailPage);
+document.getElementById('acd-filter-clear').addEventListener('click', () => {
+  document.getElementById('acd-from-date').value = '';
+  document.getElementById('acd-to-date').value = '';
+  renderAccountDetailPage();
 });
 
 document.getElementById('accounts-add-btn').addEventListener('click', () => {
@@ -5319,7 +5778,7 @@ function renderDashboard() {
       <p class="action-card-title"><span class="action-card-icon">⚠️</span>مشاريع خسرانة</p>
       <p class="action-card-value" style="color:${losingProjectsCount > 0 ? 'var(--danger)' : 'var(--success)'}">${losingProjectsCount} مشروع</p>
       <p class="action-card-sub">${losingProjectsCount > 0 ? 'تحتاج مراجعة' : 'لا يوجد حاليًا'}</p>
-      <div class="action-card-btn" data-nav="projects-page">مراجعة ↗</div>
+      <div class="action-card-btn" id="dash-losing-projects-btn">مراجعة ↗</div>
     </div>
     <div class="action-card">
       <p class="action-card-title"><span class="action-card-icon">📅</span>تحصيلات مستحقة</p>
@@ -5330,6 +5789,14 @@ function renderDashboard() {
   `;
   document.querySelectorAll('#dash-action-cards .action-card-btn').forEach(btn => {
     btn.addEventListener('click', () => navigateToPage(btn.dataset.nav));
+  });
+  document.getElementById('dash-losing-projects-btn').addEventListener('click', () => {
+    navigateToPage('projects-page');
+    // نحدد فلتر "خسرانة فقط" بعد التنقل عشان الصفحة تكون خلصت render الأول
+    setTimeout(() => {
+      document.getElementById('projects-filter-profitability').value = 'losing';
+      renderProjectsPage();
+    }, 50);
   });
 
   renderDashboardAlerts();
@@ -6101,6 +6568,8 @@ function renderAttendancePage() {
    استيراد حضور العمالة
    ===================================================================== */
 let attImportParsedRows = [];
+let attImportWorkerMappings = {}; // key: الاسم الخام من الملف -> value: worker.id المختار يدويًا
+let attImportRawRowsCache = null; // نسخة من صفوف الملف الخام، عشان نقدر نعيد التحقق بعد أي تعديل مطابقة
 
 function renderAttendanceImportPage() {
   attImportParsedRows = [];
@@ -6109,7 +6578,7 @@ function renderAttendanceImportPage() {
   document.getElementById('att-import-file-name').textContent = '';
 }
 
-const ATT_IMPORT_EXPECTED_HEADERS = ['التاريخ', 'كود العامل', 'المشروع', 'الحالة', 'ساعات إضافي', 'بدلات', 'الوصف'];
+const ATT_IMPORT_EXPECTED_HEADERS = ['التاريخ', 'اسم العامل', 'المشروع', 'الحالة', 'ساعات إضافي', 'بدلات', 'الوصف'];
 
 function findWorkerByCodeOrName(raw) {
   const str = String(raw || '').trim();
@@ -6132,16 +6601,16 @@ function validateAttImportRows(rows) {
 
   const idx = {
     date: header.indexOf('التاريخ'),
-    workerCode: header.indexOf('كود العامل'),
+    workerName: header.indexOf('اسم العامل') !== -1 ? header.indexOf('اسم العامل') : header.indexOf('كود العامل'),
     project: header.indexOf('المشروع'),
     status: header.indexOf('الحالة'),
     overtimeHours: header.indexOf('ساعات إضافي'),
     allowance: header.indexOf('بدلات'),
     desc: header.indexOf('الوصف')
   };
-  const useDefaultOrder = idx.date === -1 || idx.workerCode === -1 || idx.status === -1;
+  const useDefaultOrder = idx.date === -1 || idx.workerName === -1 || idx.status === -1;
   if (useDefaultOrder) {
-    idx.date = 0; idx.workerCode = 1; idx.project = 2; idx.status = 3;
+    idx.date = 0; idx.workerName = 1; idx.project = 2; idx.status = 3;
     idx.overtimeHours = 4; idx.allowance = 5; idx.desc = 6;
   }
 
@@ -6150,8 +6619,13 @@ function validateAttImportRows(rows) {
     const date = parseImportDate(row[idx.date]);
     if (!date) errors.push('تاريخ غير صالح');
 
-    const worker = findWorkerByCodeOrName(row[idx.workerCode]);
-    if (!worker) errors.push('العامل غير موجود (تحقق من الكود أو الاسم)');
+    const rawWorkerName = String(row[idx.workerName] || '').trim();
+    // نشوف الأول هل فيه مطابقة يدوية اختارها المستخدم لهذا الاسم بالتحديد
+    const mappedWorkerId = attImportWorkerMappings[rawWorkerName];
+    const worker = mappedWorkerId
+      ? state.workers.find(w => w.id === mappedWorkerId)
+      : findWorkerByCodeOrName(rawWorkerName);
+    if (!worker) errors.push('العامل غير معروف — يحتاج ربط يدوي');
 
     const project = String(row[idx.project] || '').trim() || 'عام / غير محدد';
 
@@ -6171,7 +6645,7 @@ function validateAttImportRows(rows) {
 
     return {
       rowNum: i + 2,
-      date, workerId: worker ? worker.id : null, workerLabel: worker ? worker.name : String(row[idx.workerCode] || '—'),
+      date, workerId: worker ? worker.id : null, workerLabel: worker ? worker.name : rawWorkerName, rawWorkerName,
       project, status, overtimeHours, allowance, desc, totalDue,
       valid: errors.length === 0,
       errors
@@ -6188,6 +6662,8 @@ document.getElementById('att-import-file-input').addEventListener('change', asyn
 
   try {
     const rawRows = await readFileAsRows(file);
+    attImportRawRowsCache = rawRows;
+    attImportWorkerMappings = {};
     attImportParsedRows = validateAttImportRows(rawRows);
     renderAttImportPreview();
   } catch (err) {
@@ -6218,6 +6694,46 @@ function renderAttImportPreview() {
   if (newProjects.size > 0) {
     document.getElementById('att-import-new-entities-detail').textContent = `${newProjects.size} مشروع جديد هيُضاف تلقائيًا`;
   }
+
+  // أسماء العمال اللي معرفناش نطابقها تلقائيًا — نعرضها للمستخدم يختار العامل الصح لكل واحد
+  const unmatchedNames = new Set();
+  attImportParsedRows.forEach(r => {
+    if (!r.workerId && r.rawWorkerName) unmatchedNames.add(r.rawWorkerName);
+  });
+  const workerMappingSection = document.getElementById('att-import-worker-mapping-section');
+  const workerMappingList = document.getElementById('att-import-worker-mapping-list');
+  workerMappingSection.style.display = unmatchedNames.size > 0 ? 'block' : 'none';
+  workerMappingList.innerHTML = '';
+
+  unmatchedNames.forEach(rawName => {
+    const row = document.createElement('div');
+    row.style.display = 'grid';
+    row.style.gridTemplateColumns = '1fr 1fr';
+    row.style.gap = '10px';
+    row.style.alignItems = 'center';
+    row.style.padding = '8px 0';
+    row.style.borderBottom = '1px solid var(--border)';
+    row.innerHTML = `
+      <span style="font-size:13px"><b>${escapeHtml(rawName)}</b> <span style="color:var(--ink-mute);font-size:11.5px">(غير معروف)</span></span>
+      <select style="width:100%"></select>
+    `;
+    const select = row.querySelector('select');
+    const emptyOpt = document.createElement('option');
+    emptyOpt.value = ''; emptyOpt.textContent = '— اختر العامل —';
+    select.appendChild(emptyOpt);
+    state.workers.forEach(w => {
+      const opt = document.createElement('option');
+      opt.value = w.id; opt.textContent = `${w.name} (${w.code})`;
+      if (attImportWorkerMappings[rawName] === w.id) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', () => {
+      attImportWorkerMappings[rawName] = select.value;
+      attImportParsedRows = validateAttImportRows(attImportRawRowsCache);
+      renderAttImportPreview();
+    });
+    workerMappingList.appendChild(row);
+  });
 
   const tbody = document.getElementById('att-import-preview-body');
   tbody.innerHTML = '';
@@ -6252,6 +6768,8 @@ function renderAttImportPreview() {
 
 document.getElementById('att-import-cancel-btn').addEventListener('click', () => {
   attImportParsedRows = [];
+  attImportWorkerMappings = {};
+  attImportRawRowsCache = null;
   document.getElementById('att-import-preview-section').style.display = 'none';
   document.getElementById('att-import-file-input').value = '';
   document.getElementById('att-import-file-name').textContent = '';
@@ -6300,6 +6818,8 @@ document.getElementById('att-import-commit-btn').addEventListener('click', () =>
   }
 
   attImportParsedRows = [];
+  attImportWorkerMappings = {};
+  attImportRawRowsCache = null;
   document.getElementById('att-import-preview-section').style.display = 'none';
   document.getElementById('att-import-file-input').value = '';
   document.getElementById('att-import-file-name').textContent = '';
@@ -6308,8 +6828,8 @@ document.getElementById('att-import-commit-btn').addEventListener('click', () =>
 document.getElementById('att-import-download-template-btn').addEventListener('click', () => {
   let csv = '\uFEFF';
   csv += ATT_IMPORT_EXPECTED_HEADERS.map(h => `"${h}"`).join(',') + '\r\n';
-  const sampleWorkerCode = state.workers[0] ? state.workers[0].code : 'W001';
-  csv += `"2026-07-16","${sampleWorkerCode}","اسم المشروع","حاضر","0","0","وصف الشغل اللي اتعمل"\r\n`;
+  const sampleWorkerName = state.workers[0] ? state.workers[0].name : 'اسم العامل';
+  csv += `"2026-07-16","${sampleWorkerName}","اسم المشروع","حاضر","0","0","وصف الشغل اللي اتعمل"\r\n`;
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -6770,41 +7290,55 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
 
   if (lines.length === 0) { showToast('لا توجد أيام مستحقة لتطبيق السداد عليها', true); return; }
 
-  // المشروع المرتبط بالحركة = المشروع الأكبر قيمة ضمن الأيام اللي اتسددت (لغرض ربط الحركة بالتقارير)
-  const mainProject = Object.entries(touchedProjects).sort((x, y) => y[1] - x[1])[0][0];
-  // العميل المرتبط بيتحدد من نفس المشروع لو موجود في سجل حركات سابقة، وإلا "عام / غير محدد"
-  const relatedTxn = state.transactions.find(t => t.project === mainProject && t.customer);
-  const mainCustomer = relatedTxn ? relatedTxn.customer : 'عام / غير محدد';
+  // نوزّع السداد على حركة منفصلة لكل مشروع، بمبلغ فعلي يعكس نصيب كل مشروع من الأيام المسددة
+  // (بدل ما تتحمّل قيمة السداد بالكامل على مشروع واحد بس)
+  const projectNames = Object.keys(touchedProjects);
+  const createdTxnIds = [];
 
-  const desc = buildLaborSettlementDescription(w.name, datesInvolved);
-
-  const txn = {
-    id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
-    seq: state.nextTxnNo,
-    date: paymentDate,
-    kind: 'مصروف',
-    account: LABOR_EXPENSE_ACCOUNT,
-    project: mainProject,
-    customer: mainCustomer,
-    desc,
-    amount: amountPaid,
-    treasury: ldTreasury,
-    notes: lines.map(l => {
+  projectNames.forEach(projectName => {
+    const projectAmount = touchedProjects[projectName];
+    const projectLines = lines.filter(l => {
       const a = unpaid.find(u => u.id === l.attendanceId);
-      return `${fmtDate(a.date)} (${a.projectId}): ${fmt(l.amountApplied)}`;
-    }).join(' | '),
-    laborSettlement: {
-      workerId: w.id,
-      attendanceIds: lines.map(l => l.attendanceId),
-      lines
-    }
-  };
-  state.transactions.push(txn);
-  state.nextTxnNo += 1;
-  logAuditEvent('سداد مستحقات عامل', `${w.name}: ${fmt(amountPaid)} ج.م من ${ldTreasury} بتاريخ ${fmtDate(paymentDate)}`);
+      return a.projectId === projectName;
+    });
+    const projectDates = new Set(projectLines.map(l => unpaid.find(u => u.id === l.attendanceId).date));
+
+    const relatedTxn = state.transactions.find(t => t.project === projectName && t.customer);
+    const projectCustomer = relatedTxn ? relatedTxn.customer : 'عام / غير محدد';
+    const desc = buildLaborSettlementDescription(w.name, projectDates);
+
+    const txn = {
+      id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
+      seq: state.nextTxnNo,
+      date: paymentDate,
+      kind: 'مصروف',
+      account: LABOR_EXPENSE_ACCOUNT,
+      project: projectName,
+      customer: projectCustomer,
+      desc,
+      amount: projectAmount,
+      treasury: ldTreasury,
+      notes: projectLines.map(l => {
+        const a = unpaid.find(u => u.id === l.attendanceId);
+        return `${fmtDate(a.date)}: ${fmt(l.amountApplied)}`;
+      }).join(' | '),
+      laborSettlement: {
+        workerId: w.id,
+        attendanceIds: projectLines.map(l => l.attendanceId),
+        lines: projectLines
+      }
+    };
+    if (ldTreasury === 'بنك') txn.bankAccountId = document.getElementById('ld-bank-account')?.value || 'default-bank';
+    state.transactions.push(txn);
+    createdTxnIds.push(txn.id);
+    state.nextTxnNo += 1;
+  });
+  renumberAllTransactionsByDate();
+
+  logAuditEvent('سداد مستحقات عامل', `${w.name}: ${fmt(amountPaid)} ج.م من ${ldTreasury} بتاريخ ${fmtDate(paymentDate)} — موزّعة على ${projectNames.length} مشروع (${projectNames.join('، ')})`);
   saveState();
 
-  showToast(`تم سداد ${fmt(amountPaid)} ج.م لـ ${w.name} من ${ldTreasury === 'بنك' ? 'البنك' : 'العهدة'}`);
+  showToast(`تم سداد ${fmt(amountPaid)} ج.م لـ ${w.name} — موزّعة على ${projectNames.length} مشروع`);
   document.getElementById('ld-settlement-section').style.display = 'none';
   currentSettlementWorkerId = null;
   renderLaborDuesPage();
@@ -7005,46 +7539,74 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
   if (amountPaid <= 0) { showToast('من فضلك أدخل مبلغ سداد أكبر من صفر', true); return; }
   if (amountPaid > netDue + 0.005) { showToast(`المبلغ أكبر من صافي المستحق (${fmt(netDue)})`, true); return; }
 
-  // نحدد المشروع/العميل المرتبطين بالحركة من أكتر مشروع اشتغل فيه الموظف في هذا الشهر (لغرض ربط التقارير)
+  // نحدد نصيب كل مشروع من الشهر بناءً على نسبة أيام الحضور الفعلية فيه، ونوزّع المبلغ المسدد بنفس النسبة
   const monthRecords = workerAttendanceRecords(w.id).filter(a => a.date.startsWith(month));
-  const projectTotals = {};
-  monthRecords.forEach(a => { projectTotals[a.projectId] = (projectTotals[a.projectId] || 0) + 1; });
-  const mainProject = Object.keys(projectTotals).length > 0
-    ? Object.entries(projectTotals).sort((x, y) => y[1] - x[1])[0][0]
-    : 'عام / غير محدد';
-  const relatedTxn = state.transactions.find(t => t.project === mainProject && t.customer);
-  const mainCustomer = relatedTxn ? relatedTxn.customer : 'عام / غير محدد';
+  const projectDayCounts = {};
+  monthRecords.forEach(a => { projectDayCounts[a.projectId] = (projectDayCounts[a.projectId] || 0) + 1; });
+  const totalDaysInMonth = Object.values(projectDayCounts).reduce((s, c) => s + c, 0);
 
   const monthLabel = formatArabicMonthYear(month);
-  const desc = `راتب الموظف ${w.name} لشهر ${monthLabel} بعد الخصومات والإضافات`;
+  const createdTxnIds = [];
 
-  const txn = {
-    id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
-    seq: state.nextTxnNo,
-    date: paymentDate,
-    kind: 'مصروف',
-    account: LABOR_EXPENSE_ACCOUNT,
-    project: mainProject,
-    customer: mainCustomer,
-    desc,
-    amount: amountPaid,
-    treasury: ldMonthlyTreasury,
-    notes: `المرتب الأساسي: ${fmt(md.baseSalary)} | بدلات وإضافي: ${fmt(md.extras)} | سلف/خصومات مطبقة: ${fmt(advDedTotal)}`,
-    monthlySettlement: {
-      workerId: w.id,
-      month
-    }
-  };
-  state.transactions.push(txn);
-  state.nextTxnNo += 1;
+  if (totalDaysInMonth === 0) {
+    // مفيش أي حضور مسجل في الشهر ده خالص — نسجل الراتب كحركة واحدة عامة (مفيش أساس نوزّع عليه)
+    const desc = `راتب الموظف ${w.name} لشهر ${monthLabel} بعد الخصومات والإضافات`;
+    const txn = {
+      id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
+      seq: state.nextTxnNo,
+      date: paymentDate,
+      kind: 'مصروف',
+      account: LABOR_EXPENSE_ACCOUNT,
+      project: 'عام / غير محدد',
+      customer: 'عام / غير محدد',
+      desc,
+      amount: amountPaid,
+      treasury: ldMonthlyTreasury,
+      notes: `المرتب الأساسي: ${fmt(md.baseSalary)} | بدلات وإضافي: ${fmt(md.extras)} | سلف/خصومات مطبقة: ${fmt(advDedTotal)}`,
+      monthlySettlement: { workerId: w.id, month }
+    };
+    state.transactions.push(txn);
+    createdTxnIds.push(txn.id);
+    state.nextTxnNo += 1;
+  } else {
+    // توزيع المبلغ على كل مشروع بنسبة أيامه الفعلية من إجمالي أيام الشهر
+    Object.entries(projectDayCounts).forEach(([projectName, dayCount]) => {
+      const shareRatio = dayCount / totalDaysInMonth;
+      const projectAmount = amountPaid * shareRatio;
+      const relatedTxn = state.transactions.find(t => t.project === projectName && t.customer);
+      const projectCustomer = relatedTxn ? relatedTxn.customer : 'عام / غير محدد';
+      const desc = `راتب الموظف ${w.name} لشهر ${monthLabel} — نصيب مشروع ${projectName} (${dayCount} من ${totalDaysInMonth} يوم)`;
+
+      const txn = {
+        id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
+        seq: state.nextTxnNo,
+        date: paymentDate,
+        kind: 'مصروف',
+        account: LABOR_EXPENSE_ACCOUNT,
+        project: projectName,
+        customer: projectCustomer,
+        desc,
+        amount: projectAmount,
+        treasury: ldMonthlyTreasury,
+        notes: `نسبة الأيام: ${dayCount}/${totalDaysInMonth} — المرتب الأساسي الكامل: ${fmt(md.baseSalary)} | بدلات وإضافي: ${fmt(md.extras)} | سلف/خصومات: ${fmt(advDedTotal)}`,
+        monthlySettlement: { workerId: w.id, month }
+      };
+      if (ldMonthlyTreasury === 'بنك') txn.bankAccountId = document.getElementById('ld-monthly-bank-account')?.value || 'default-bank';
+      state.transactions.push(txn);
+      createdTxnIds.push(txn.id);
+      state.nextTxnNo += 1;
+    });
+  }
+  renumberAllTransactionsByDate();
 
   // نعلّم السلف/الخصومات المطبقة في التسوية دي عشان ما تتخصمش تاني في شهر جاي
   monthAdvDeds.forEach(a => { a.consumedInMonth = month; });
 
-  logAuditEvent('سداد راتب شهري', `${w.name}: ${fmt(amountPaid)} ج.م لشهر ${monthLabel} من ${ldMonthlyTreasury}`);
+  const projectsCount = Object.keys(projectDayCounts).length || 1;
+  logAuditEvent('سداد راتب شهري', `${w.name}: ${fmt(amountPaid)} ج.م لشهر ${monthLabel} من ${ldMonthlyTreasury} — موزّع على ${projectsCount} مشروع حسب نسبة الأيام`);
   saveState();
 
-  showToast(`تم سداد راتب ${w.name} لشهر ${monthLabel} بنجاح (${fmt(amountPaid)} ج.م من ${ldMonthlyTreasury === 'بنك' ? 'البنك' : 'العهدة'})`);
+  showToast(`تم سداد راتب ${w.name} لشهر ${monthLabel} بنجاح — موزّع على ${projectsCount} مشروع`);
   document.getElementById('ld-monthly-settlement-section').style.display = 'none';
   currentMonthlySettlementWorkerId = null;
   renderLaborDuesPage();
@@ -7199,6 +7761,7 @@ document.getElementById('adv-form-submit').addEventListener('click', () => {
     state.transactions.push(txn);
     linkedTxnId = txn.id;
     state.nextTxnNo += 1;
+  renumberAllTransactionsByDate();
   }
 
   state.advancesDeductions.push({
@@ -7865,6 +8428,29 @@ const EXPORT_DATA_PROVIDERS = {
       }]
     };
   },
+  'account-detail-page': () => {
+    if (!currentAccountDetailName) return null;
+    const from = document.getElementById('acd-from-date').value;
+    const to = document.getElementById('acd-to-date').value;
+    const txns = state.transactions
+      .filter(t => t.account === currentAccountDetailName)
+      .filter(t => !from || t.date >= from)
+      .filter(t => !to || t.date <= to)
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
+    const total = txns.reduce((s, t) => s + t.amount, 0);
+    const periodLabel = (from || to) ? ` (${from ? fmtDate(from) : '—'} إلى ${to ? fmtDate(to) : '—'})` : '';
+    return {
+      title: `تفاصيل حساب — ${currentAccountDetailName}${periodLabel}`,
+      sections: [
+        { heading: `عدد الحركات: ${txns.length} | الإجمالي: ${fmt(total)}`, columns: [], rows: [] },
+        {
+          heading: null,
+          columns: ['التاريخ', 'البيان', 'المشروع', 'العميل', 'المبلغ', 'الخزينة'],
+          rows: txns.map(t => [fmtDate(t.date), t.desc, t.project, t.customer, t.amount, t.treasury])
+        }
+      ]
+    };
+  },
   'project-detail-page': () => {
     if (!currentProjectDetail) return null;
     const agg = projectAgg(currentProjectDetail);
@@ -8425,6 +9011,7 @@ function executeAiAction(action) {
     };
     state.transactions.push(txn);
     state.nextTxnNo += 1;
+  renumberAllTransactionsByDate();
     saveState();
     return 'تم تسجيل الحركة بنجاح ✅';
   }
@@ -8601,6 +9188,172 @@ function getForecastStatus(f) {
   if (f.dueDate < today) return 'overdue';
   return 'pending';
 }
+
+/* =====================================================================
+   دفعات واجبة السداد — أداة متابعة وتذكير بس، بدون أي تأثير حسابي
+   ===================================================================== */
+let editingPayableId = null;
+
+function openPayablesModal(payableId) {
+  editingPayableId = payableId || null;
+  const modal = document.getElementById('payables-modal-overlay');
+  const title = document.getElementById('payables-modal-title');
+
+  if (payableId) {
+    const p = state.payables.find(x => x.id === payableId);
+    if (!p) return;
+    title.textContent = 'تعديل دفعة واجبة السداد';
+    document.getElementById('payables-desc').value = p.desc || '';
+    document.getElementById('payables-source').value = p.source || '';
+    document.getElementById('payables-amount').value = p.amount || '';
+    document.getElementById('payables-due-date').value = p.dueDate || '';
+    document.getElementById('payables-notes').value = p.notes || '';
+  } else {
+    title.textContent = 'إضافة دفعة واجبة السداد';
+    document.getElementById('payables-desc').value = '';
+    document.getElementById('payables-source').value = '';
+    document.getElementById('payables-amount').value = '';
+    document.getElementById('payables-due-date').value = '';
+    document.getElementById('payables-notes').value = '';
+  }
+  modal.style.display = 'flex';
+}
+
+function closePayablesModal() {
+  document.getElementById('payables-modal-overlay').style.display = 'none';
+  editingPayableId = null;
+}
+
+document.getElementById('payables-add-btn').addEventListener('click', () => openPayablesModal(null));
+document.getElementById('payables-modal-cancel-btn').addEventListener('click', closePayablesModal);
+
+document.getElementById('payables-modal-save-btn').addEventListener('click', () => {
+  const desc = document.getElementById('payables-desc').value.trim();
+  const source = document.getElementById('payables-source').value.trim();
+  const amount = parseFloat(document.getElementById('payables-amount').value) || 0;
+  const dueDate = document.getElementById('payables-due-date').value;
+  const notes = document.getElementById('payables-notes').value.trim();
+
+  if (!desc) { showToast('من فضلك أدخل وصف للدفعة', true); return; }
+  if (amount <= 0) { showToast('من فضلك أدخل مبلغ أكبر من صفر', true); return; }
+  if (!dueDate) { showToast('من فضلك حدد تاريخ الاستحقاق', true); return; }
+
+  if (editingPayableId) {
+    const p = state.payables.find(x => x.id === editingPayableId);
+    Object.assign(p, { desc, source, amount, dueDate, notes });
+  } else {
+    state.payables.push({
+      id: crypto.randomUUID(),
+      desc, source, amount, dueDate, notes,
+      paid: false,
+      createdAt: new Date().toISOString().slice(0, 10)
+    });
+  }
+  saveState();
+  closePayablesModal();
+  renderPayablesPage();
+  showToast(editingPayableId ? 'تم تحديث البند بنجاح' : 'تم إضافة الدفعة بنجاح');
+});
+
+function togglePayablePaid(payableId) {
+  const p = state.payables.find(x => x.id === payableId);
+  if (!p) return;
+  p.paid = !p.paid;
+  saveState();
+  renderPayablesPage();
+}
+
+function deletePayable(payableId) {
+  if (!confirm('هل تريد حذف هذا البند من دفعات واجبة السداد؟')) return;
+  state.payables = state.payables.filter(x => x.id !== payableId);
+  saveState();
+  renderPayablesPage();
+  showToast('تم حذف البند');
+}
+
+function getPayableStatus(p) {
+  if (p.paid) return 'paid';
+  const today = new Date().toISOString().slice(0, 10);
+  if (p.dueDate < today) return 'overdue';
+  return 'pending';
+}
+
+function renderPayablesPage() {
+  const statusFilter = document.getElementById('payables-filter-status').value;
+  const today = new Date().toISOString().slice(0, 10);
+  const in7Days = new Date();
+  in7Days.setDate(in7Days.getDate() + 7);
+  const in7DaysStr = in7Days.toISOString().slice(0, 10);
+
+  document.getElementById('payables-count-label').textContent = `${state.payables.length} بند`;
+
+  const totalPending = state.payables.filter(p => !p.paid).reduce((s, p) => s + p.amount, 0);
+  const totalOverdue = state.payables.filter(p => !p.paid && p.dueDate < today).reduce((s, p) => s + p.amount, 0);
+  const totalUpcoming = state.payables.filter(p => !p.paid && p.dueDate >= today && p.dueDate <= in7DaysStr).reduce((s, p) => s + p.amount, 0);
+
+  document.getElementById('payables-total-pending').textContent = fmt(totalPending);
+  document.getElementById('payables-total-overdue').textContent = fmt(totalOverdue);
+  document.getElementById('payables-total-upcoming').textContent = fmt(totalUpcoming);
+
+  const rows = [...state.payables]
+    .filter(p => !statusFilter || getPayableStatus(p) === statusFilter)
+    .sort((a, b) => a.dueDate < b.dueDate ? -1 : 1);
+
+  const tbody = document.getElementById('payables-table-body');
+  tbody.innerHTML = '';
+  document.getElementById('payables-empty').style.display = rows.length === 0 ? 'block' : 'none';
+
+  const statusBadges = {
+    pending: '<span class="badge badge-mute">لم يُسدَّد بعد</span>',
+    overdue: '<span class="badge badge-danger">⚠️ متأخر</span>',
+    paid: '<span class="badge badge-success">✓ تم السداد</span>'
+  };
+
+  rows.forEach(p => {
+    const status = getPayableStatus(p);
+    // خط الشطب بيظهر بس لو تم السداد — تظل الحركة كاملة ظاهرة للمرجعية، من غير أي تأثير حسابي
+    const strikeStyle = p.paid ? 'text-decoration: line-through; color: var(--ink-mute);' : '';
+    const tr = document.createElement('tr');
+    tr.style.cssText = strikeStyle;
+    tr.innerHTML = `
+      <td></td>
+      <td>${escapeHtml(p.desc)}${p.notes ? `<br><span style="font-size:11px;color:var(--ink-mute)">${escapeHtml(p.notes)}</span>` : ''}</td>
+      <td>${escapeHtml(p.source) || '—'}</td>
+      <td>${fmtDate(p.dueDate)}</td>
+      <td class="text-left num" style="font-weight:700">${fmt(p.amount)}</td>
+      <td>${statusBadges[status]}</td>
+      <td></td>
+    `;
+    const checkboxCell = tr.children[0];
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = p.paid;
+    checkbox.title = p.paid ? 'إلغاء تحديد كمسدد' : 'تحديد كمسدد';
+    checkbox.addEventListener('change', () => togglePayablePaid(p.id));
+    checkboxCell.appendChild(checkbox);
+
+    const actionsCell = tr.lastElementChild;
+    const editBtn = document.createElement('button');
+    editBtn.className = 'icon-btn';
+    editBtn.title = 'تعديل';
+    editBtn.textContent = '✏️';
+    editBtn.addEventListener('click', () => openPayablesModal(p.id));
+    const delBtn = document.createElement('button');
+    delBtn.className = 'icon-btn';
+    delBtn.title = 'حذف';
+    delBtn.textContent = '🗑️';
+    delBtn.addEventListener('click', () => deletePayable(p.id));
+    actionsCell.appendChild(editBtn);
+    actionsCell.appendChild(delBtn);
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('payables-filter-status').addEventListener('change', renderPayablesPage);
+document.getElementById('payables-filter-clear').addEventListener('click', () => {
+  document.getElementById('payables-filter-status').value = '';
+  renderPayablesPage();
+});
 
 function renderForecastPage() {
   const statusFilter = document.getElementById('forecast-filter-status').value;
@@ -9162,6 +9915,100 @@ document.getElementById('audit-filter-clear').addEventListener('click', () => {
   document.getElementById('audit-filter-action').value = '';
   document.getElementById('audit-filter-user').value = '';
   renderAuditLogPage();
+});
+
+/* ============ فحص تطابق البيانات ============ */
+function levenshteinDistance(a, b) {
+  const matrix = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      matrix[i][j] = a[i - 1] === b[j - 1]
+        ? matrix[i - 1][j - 1]
+        : 1 + Math.min(matrix[i - 1][j], matrix[i][j - 1], matrix[i - 1][j - 1]);
+    }
+  }
+  return matrix[a.length][b.length];
+}
+
+function findSimilarNames(names) {
+  const pairs = [];
+  for (let i = 0; i < names.length; i++) {
+    for (let j = i + 1; j < names.length; j++) {
+      const a = names[i], b = names[j];
+      if (a === b) continue;
+      const dist = levenshteinDistance(a, b);
+      // نعتبرهم "مشابهين مريبين" لو الفرق بينهم صغير جدًا نسبة لطولهم (احتمال خطأ إملائي)
+      const maxLen = Math.max(a.length, b.length);
+      if (dist > 0 && dist <= 2 && maxLen > 3) pairs.push([a, b, dist]);
+    }
+  }
+  return pairs;
+}
+
+document.getElementById('audit-run-integrity-check').addEventListener('click', () => {
+  const resultsEl = document.getElementById('audit-integrity-results');
+  resultsEl.innerHTML = '<p style="font-size:13px;color:var(--ink-mute)">جاري الفحص...</p>';
+
+  const issues = [];
+
+  // فحص 1: أسماء مشاريع متشابهة جدًا (احتمال تكرار بخطأ إملائي)
+  const similarProjects = findSimilarNames(state.projects);
+  if (similarProjects.length > 0) {
+    issues.push({
+      title: `⚠️ ${similarProjects.length} زوج من أسماء مشاريع متشابهة جدًا`,
+      desc: 'ممكن يكون نفس المشروع بخطأ إملائي، يفضل مراجعتهم يدويًا',
+      items: similarProjects.map(([a, b]) => `"${a}" ≈ "${b}"`)
+    });
+  }
+
+  // فحص 2: أسماء عملاء متشابهة جدًا
+  const similarCustomers = findSimilarNames(state.customers);
+  if (similarCustomers.length > 0) {
+    issues.push({
+      title: `⚠️ ${similarCustomers.length} زوج من أسماء عملاء متشابهة جدًا`,
+      desc: 'ممكن يكون نفس العميل بخطأ إملائي، يفضل مراجعتهم يدويًا',
+      items: similarCustomers.map(([a, b]) => `"${a}" ≈ "${b}"`)
+    });
+  }
+
+  // فحص 3: حركات على مشروع مش موجود في state.projects (بيانات يتيمة)
+  const orphanProjectTxns = state.transactions.filter(t => t.project && t.project !== 'عام / غير محدد' && !state.projects.includes(t.project));
+  if (orphanProjectTxns.length > 0) {
+    const orphanNames = [...new Set(orphanProjectTxns.map(t => t.project))];
+    issues.push({
+      title: `⚠️ ${orphanProjectTxns.length} حركة على مشاريع غير مسجلة في القائمة الرسمية`,
+      desc: 'المشاريع دي ظاهرة في الحركات بس مش موجودة في قائمة "المشاريع" — غالبًا حصل حذف يدوي للمشروع بعد تسجيل حركات عليه',
+      items: orphanNames
+    });
+  }
+
+  // فحص 4: حركات على عميل مش موجود في state.customers
+  const orphanCustomerTxns = state.transactions.filter(t => t.customer && t.customer !== 'عام / غير محدد' && !state.customers.includes(t.customer));
+  if (orphanCustomerTxns.length > 0) {
+    const orphanNames = [...new Set(orphanCustomerTxns.map(t => t.customer))];
+    issues.push({
+      title: `⚠️ ${orphanCustomerTxns.length} حركة على عملاء غير مسجلين في القائمة الرسمية`,
+      desc: 'العملاء دول ظاهرين في الحركات بس مش موجودين في قائمة "العملاء"',
+      items: orphanNames
+    });
+  }
+
+  if (issues.length === 0) {
+    resultsEl.innerHTML = `<div class="alert-card success"><span class="alert-icon">✅</span><div class="alert-body"><p class="alert-title">مفيش مشاكل تطابق ظاهرة</p><p class="alert-desc">أسماء المشاريع والعملاء متسقة، ومفيش بيانات يتيمة</p></div></div>`;
+    return;
+  }
+
+  resultsEl.innerHTML = issues.map(issue => `
+    <div class="alert-card warning" style="margin-bottom:10px">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body">
+        <p class="alert-title">${escapeHtml(issue.title)}</p>
+        <p class="alert-desc">${escapeHtml(issue.desc)}</p>
+        <p class="alert-desc" style="margin-top:6px">${issue.items.map(i => escapeHtml(i)).join('<br>')}</p>
+      </div>
+    </div>
+  `).join('');
 });
 
 
