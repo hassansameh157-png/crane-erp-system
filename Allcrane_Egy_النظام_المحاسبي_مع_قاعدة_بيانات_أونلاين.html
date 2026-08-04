@@ -486,7 +486,7 @@
     <div class="nav-item" data-page="import-page"><span class="nav-icon">⬆️</span><span>استيراد حركات</span></div>
 
     <div class="nav-section-label">المتابعة</div>
-    <div class="nav-item" data-page="projects-page"><span class="nav-icon">📁</span><span>المشاريع</span></div>
+    <div class="nav-item" data-page="projects-page"><span class="nav-icon">📁</span><span>المشروعات</span></div>
     <div class="nav-item" data-page="customers-page"><span class="nav-icon">🧑‍💼</span><span>العملاء</span></div>
     <div class="nav-item" data-page="treasury-page"><span class="nav-icon">💼</span><span>العهدة</span></div>
     <div class="nav-item" data-page="bank-accounts-page"><span class="nav-icon">🏛️</span><span>الحسابات البنكية</span></div>
@@ -495,7 +495,7 @@
     <div class="nav-section-label">العمالة</div>
     <div class="nav-item" data-page="attendance-page"><span class="nav-icon">🗓️</span><span>تسجيل الحضور</span></div>
     <div class="nav-item" data-page="attendance-import-page"><span class="nav-icon">⬆️</span><span>استيراد حضور</span></div>
-    <div class="nav-item" data-page="labor-dues-page"><span class="nav-icon">💰</span><span>مستحقات العمال</span></div>
+    <div class="nav-item" data-page="labor-dues-page"><span class="nav-icon">💰</span><span>مستحقات العمالة</span></div>
     <div class="nav-item" data-page="advances-page"><span class="nav-icon">📋</span><span>السلف والخصومات</span></div>
     <div class="nav-item" data-page="labor-report-page"><span class="nav-icon">📈</span><span>تقرير قبض العمالة</span></div>
     <div class="nav-item" data-page="workers-page"><span class="nav-icon">👷</span><span>العمال</span></div>
@@ -540,7 +540,7 @@
       </div>
       <div class="mobile-drawer-body">
         <div class="nav-section-label">المتابعة</div>
-        <div class="nav-item mobile-drawer-item" data-page="projects-page"><span class="nav-icon">📁</span><span>المشاريع</span></div>
+        <div class="nav-item mobile-drawer-item" data-page="projects-page"><span class="nav-icon">📁</span><span>المشروعات</span></div>
         <div class="nav-item mobile-drawer-item" data-page="customers-page"><span class="nav-icon">🧑‍💼</span><span>العملاء</span></div>
         <div class="nav-item mobile-drawer-item" data-page="treasury-page"><span class="nav-icon">💼</span><span>العهدة</span></div>
         <div class="nav-item mobile-drawer-item" data-page="bank-accounts-page"><span class="nav-icon">🏛️</span><span>الحسابات البنكية</span></div>
@@ -549,7 +549,7 @@
 
         <div class="nav-section-label">العمالة</div>
         <div class="nav-item mobile-drawer-item" data-page="attendance-import-page"><span class="nav-icon">⬆️</span><span>استيراد حضور</span></div>
-        <div class="nav-item mobile-drawer-item" data-page="labor-dues-page"><span class="nav-icon">💰</span><span>مستحقات العمال</span></div>
+        <div class="nav-item mobile-drawer-item" data-page="labor-dues-page"><span class="nav-icon">💰</span><span>مستحقات العمالة</span></div>
         <div class="nav-item mobile-drawer-item" data-page="advances-page"><span class="nav-icon">📋</span><span>السلف والخصومات</span></div>
         <div class="nav-item mobile-drawer-item" data-page="labor-report-page"><span class="nav-icon">📈</span><span>تقرير قبض العمالة</span></div>
         <div class="nav-item mobile-drawer-item" data-page="workers-page"><span class="nav-icon">👷</span><span>العمال</span></div>
@@ -640,6 +640,9 @@
           <h1 class="page-title">لوحة التحكم</h1>
           <p class="page-sub" id="dash-date-label">—</p>
         </div>
+        <div class="header-actions">
+          <button class="btn btn-sm" id="dash-customize-btn">⚙️ تخصيص الداشبورد</button>
+        </div>
       </div>
 
       <div class="filter-bar">
@@ -655,6 +658,11 @@
       </div>
 
       <div class="action-card-grid" id="dash-action-cards"></div>
+
+      <div id="dash-custom-cards-section" style="display:none">
+        <p style="font-size:13px;color:var(--ink-soft);margin:20px 0 8px">اختصاراتك المخصصة</p>
+        <div class="action-card-grid" id="dash-custom-cards"></div>
+      </div>
 
       <div id="forecast-dashboard-alert" style="display:none;margin-bottom:10px"></div>
       <div id="dash-alerts-section" style="margin-bottom:18px"></div>
@@ -771,6 +779,7 @@
         </div>
         <div class="header-actions">
           <div class="export-toolbar" data-export-target="txns-page"></div>
+          <button class="btn btn-sm" id="txns-renumber-btn" title="لو حركات قديمة لسه بأرقام غير مرتبة بالتاريخ، دوس هنا لإعادة ترقيمهم كلهم دفعة واحدة">🔄 إعادة ترقيم حسب التاريخ</button>
           <button class="btn btn-primary" id="txns-new-btn">+ حركة جديدة</button>
         </div>
       </div>
@@ -870,7 +879,7 @@
     <div class="page" id="projects-page">
       <div class="page-header">
         <div>
-          <h1 class="page-title">المشاريع</h1>
+          <h1 class="page-title">المشروعات</h1>
           <p class="page-sub" id="projects-count-label">— مشروع</p>
         </div>
         <div class="header-actions">
@@ -904,7 +913,7 @@
       </div>
       <div class="card card-tight">
         <table>
-          <thead><tr><th>المشروع</th><th>الحالة</th><th class="text-left">الميزانية</th><th class="text-left">الإيرادات</th><th class="text-left">المصروفات</th><th class="text-left">صافي الربح</th><th class="text-left">نسبة الربح</th></tr></thead>
+          <thead><tr><th>المشروع</th><th>العميل</th><th>الحالة</th><th class="text-left">الميزانية</th><th class="text-left">الإيرادات</th><th class="text-left">المصروفات</th><th class="text-left">صافي الربح</th><th class="text-left">نسبة الربح</th><th></th></tr></thead>
           <tbody id="projects-table-body"></tbody>
         </table>
       </div>
@@ -953,6 +962,11 @@
             </div>
           </div>
           <div id="pd-meta-form" style="display:none">
+            <div class="field" style="margin-bottom:12px">
+              <label>اسم المشروع</label>
+              <input type="text" id="pd-meta-name-input">
+              <p style="font-size:11px;color:var(--ink-mute);margin:4px 0 0">⚠️ تغيير الاسم سيحدّث كل الحركات والحضور والأصول المرتبطة بهذا المشروع تلقائيًا</p>
+            </div>
             <div class="form-grid">
               <div class="field">
                 <label>الحالة</label>
@@ -1039,7 +1053,7 @@
       </div>
       <div class="card card-tight">
         <table>
-          <thead><tr><th>العميل</th><th class="text-left">عدد المشاريع</th><th class="text-left">الإيرادات</th><th class="text-left">المصروفات</th><th class="text-left">صافي الربح</th><th class="text-left">نسبة الربح</th></tr></thead>
+          <thead><tr><th>العميل</th><th class="text-left">عدد المشاريع</th><th class="text-left">الإيرادات</th><th class="text-left">المصروفات</th><th class="text-left">صافي الربح</th><th class="text-left">نسبة الربح</th><th></th></tr></thead>
           <tbody id="customers-table-body"></tbody>
         </table>
       </div>
@@ -1428,7 +1442,7 @@
     <div class="page" id="labor-dues-page">
       <div class="page-header">
         <div>
-          <h1 class="page-title">مستحقات العمال</h1>
+          <h1 class="page-title">مستحقات العمالة</h1>
           <p class="page-sub">كشف مستحقات كل عامل — سدّد من البنك أو العهدة مباشرة</p>
         </div>
         <div class="header-actions">
@@ -2144,6 +2158,7 @@
           <p class="page-sub" id="ba-count-label">— حساب</p>
         </div>
         <div class="header-actions">
+          <button class="btn btn-sm" id="ba-transfer-btn">↔ تحويل بين البنك والعهدة</button>
           <button class="btn btn-primary" id="ba-add-btn">+ حساب بنكي جديد</button>
         </div>
       </div>
@@ -2475,6 +2490,19 @@
 </div>
 
 <!-- ============ نافذة إنشاء مشروع جديد ============ -->
+<!-- ============ نافذة تخصيص الداشبورد ============ -->
+<div id="dash-customize-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9700;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="width:100%;max-width:440px;max-height:82vh;overflow-y:auto">
+    <p style="font-weight:700;font-size:15px;margin:0 0 8px">تخصيص الداشبورد</p>
+    <p style="font-size:12px;color:var(--ink-soft);margin:0 0 16px">اختر أي صفحات عايز تظهر كاختصارات سريعة إضافية في الداشبورد</p>
+    <div id="dash-customize-list"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="btn" id="dash-customize-cancel-btn">إلغاء</button>
+      <button class="btn btn-primary" id="dash-customize-save-btn">حفظ</button>
+    </div>
+  </div>
+</div>
+
 <div id="new-project-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9700;align-items:center;justify-content:center;padding:16px">
   <div class="card" style="width:100%;max-width:460px;max-height:88vh;overflow-y:auto">
     <p style="font-weight:700;font-size:15px;margin:0 0 16px">مشروع جديد</p>
@@ -2821,6 +2849,7 @@ function migrateState(s) {
   if (!s.advancesDeductions) s.advancesDeductions = [];
   if (!s.forecasts) s.forecasts = [];
   if (!s.payables) s.payables = [];
+  if (!s.dashboardCustomCards) s.dashboardCustomCards = [];
   if (!s.assets) s.assets = [];
   if (!s.partnerships) s.partnerships = [];
   if (!s.auditLog) s.auditLog = [];
@@ -3389,6 +3418,32 @@ const REPORTS_HUB_ITEMS = [
   { icon: '🔍', title: 'سجل التتبع', sub: 'كل العمليات الحساسة، من قام بها ومتى', page: 'audit-log-page' }
 ];
 
+/* كل صفحات السيستم المتاحة للإضافة كاختصار مخصص في الداشبورد */
+const ALL_DASHBOARD_LINKABLE_PAGES = [
+  { icon: '🗓️', title: 'تسجيل الحضور', page: 'attendance-page' },
+  { icon: '⬆️', title: 'استيراد حضور', page: 'attendance-import-page' },
+  { icon: '📄', title: 'سجل الحركات', page: 'txns-page' },
+  { icon: '⬆️', title: 'استيراد حركات', page: 'import-page' },
+  { icon: '📁', title: 'المشاريع', page: 'projects-page' },
+  { icon: '🧑‍💼', title: 'العملاء', page: 'customers-page' },
+  { icon: '💼', title: 'العهدة', page: 'treasury-page' },
+  { icon: '🏛️', title: 'الحسابات البنكية', page: 'bank-accounts-page' },
+  { icon: '👷', title: 'العمال', page: 'workers-page' },
+  { icon: '💰', title: 'مستحقات العمال', page: 'labor-dues-page' },
+  { icon: '📋', title: 'السلف والخصومات', page: 'advances-page' },
+  { icon: '📈', title: 'الأرباح والخسائر', page: 'pl-page' },
+  { icon: '🗂️', title: 'دليل الحسابات', page: 'accounts-page' },
+  { icon: '💵', title: 'التدفقات النقدية', page: 'cashflow-report-page' },
+  { icon: '👷', title: 'تقرير قبض العمالة', page: 'labor-report-page' },
+  { icon: '🔮', title: 'التحصيلات المتوقعة', page: 'forecast-page' },
+  { icon: '📋', title: 'دفعات واجبة السداد', page: 'payables-page' },
+  { icon: '📅', title: 'التقويم', page: 'calendar-page' },
+  { icon: '🏗️', title: 'أصول الشركة', page: 'assets-page' },
+  { icon: '🧮', title: 'حاسبة التسعير', page: 'pricing-page' },
+  { icon: '🔍', title: 'سجل التتبع', page: 'audit-log-page' },
+  { icon: '🤝', title: 'كابيتال واي', page: 'partnership-page' }
+];
+
 function renderReportsHubPage() {
   const grid = document.getElementById('reports-hub-grid');
   grid.innerHTML = '';
@@ -3769,6 +3824,13 @@ document.getElementById('txn-submit').addEventListener('click', () => {
 });
 
 document.getElementById('txns-new-btn').addEventListener('click', () => navigateToPage('new-txn-page'));
+document.getElementById('txns-renumber-btn').addEventListener('click', () => {
+  if (!confirm('سيتم إعادة ترقيم كل الحركات حسب التاريخ الفعلي. هل تريد المتابعة؟')) return;
+  renumberAllTransactionsByDate();
+  saveState();
+  renderTxnsTable();
+  showToast('تم إعادة ترقيم كل الحركات حسب التاريخ بنجاح');
+});
 
 /* =====================================================================
    استيراد حركات من ملف Excel/CSV
@@ -4496,8 +4558,8 @@ function renderProjectsProfitChart(rows) {
   top10.forEach(r => {
     const pct = (Math.abs(r.profit) / maxAbs) * 100;
     const isPositive = r.profit >= 0;
-    const row = el('div', { style: 'display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12.5px' }, [
-      el('span', { style: 'width:130px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap', text: r.name }),
+    const row = el('div', { style: 'display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:12.5px' }, [
+      el('span', { style: 'width:190px;flex-shrink:0;line-height:1.4;overflow-wrap:break-word', text: r.name, title: r.name }),
       el('div', { style: 'flex:1;background:var(--surface-2);border-radius:6px;height:20px;position:relative;overflow:hidden' }, [
         el('div', { style: `height:100%;border-radius:6px;width:${pct}%;background:${isPositive ? 'var(--success)' : 'var(--danger)'}` })
       ]),
@@ -4540,18 +4602,44 @@ function renderProjectsPage() {
     const statusLabel = PROJECT_STATUS_LABELS[r.meta.status] || 'نشط';
     const statusBadgeClass = PROJECT_STATUS_BADGE_CLASS[r.meta.status] || 'badge-success';
     const budgetDisplay = r.meta.budget > 0 ? fmt(r.meta.budget) : '—';
+    const linkedCustomer = state.projectCustomerLinks[r.name] || '—';
+    const hasAttendance = state.attendance.some(a => a.projectId === r.name);
+    const hasNoActivity = r.revenue === 0 && r.expense === 0 && !hasAttendance;
     const tr = document.createElement('tr');
     tr.style.cursor = 'pointer';
     tr.innerHTML = `
       <td>${r.name}</td>
+      <td style="color:var(--ink-soft)">${escapeHtml(linkedCustomer)}</td>
       <td><span class="badge ${statusBadgeClass}">${statusLabel}</span></td>
       <td class="text-left num">${budgetDisplay}</td>
       <td class="text-left" style="color:var(--success)">${fmt(r.revenue)}</td>
       <td class="text-left" style="color:var(--danger)">${fmt(r.expense)}</td>
       <td class="text-left" style="font-weight:700;color:${r.profit >= 0 ? 'var(--success)' : 'var(--danger)'}">${fmt(r.profit)}</td>
       <td class="text-left">${r.revenue > 0 ? margin.toFixed(0) + '%' : '—'}</td>
+      <td></td>
     `;
     tr.addEventListener('click', () => { currentProjectDetail = r.name; navigateToPage('project-detail-page'); });
+
+    if (hasNoActivity) {
+      const actionsCell = tr.lastElementChild;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'icon-btn';
+      delBtn.textContent = '🗑️';
+      delBtn.title = 'حذف المشروع (لا توجد عليه أي حركات)';
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // نمنع فتح صفحة تفاصيل المشروع لما ندوس على زرار الحذف
+        if (!confirm(`هل تريد حذف مشروع "${r.name}"؟ هذا الإجراء لا يمكن التراجع عنه.`)) return;
+        state.projects = state.projects.filter(p => p !== r.name);
+        delete state.projectMeta[r.name];
+        delete state.projectCustomerLinks[r.name];
+        logAuditEvent('حذف مشروع', r.name);
+        saveState();
+        renderProjectsPage();
+        showToast(`تم حذف مشروع "${r.name}"`);
+      });
+      actionsCell.appendChild(delBtn);
+    }
+
     tbody.appendChild(tr);
   });
 }
@@ -4649,6 +4737,7 @@ function renderProjectDetail() {
 
 function openProjectMetaForm() {
   const meta = getProjectMeta(currentProjectDetail);
+  document.getElementById('pd-meta-name-input').value = currentProjectDetail;
   document.getElementById('pd-meta-status-input').value = meta.status;
   document.getElementById('pd-meta-budget-input').value = meta.budget || '';
   document.getElementById('pd-meta-start-input').value = meta.startDate || '';
@@ -4665,6 +4754,40 @@ document.getElementById('pd-meta-cancel-btn').addEventListener('click', () => {
   document.getElementById('pd-meta-form').style.display = 'none';
 });
 document.getElementById('pd-meta-save-btn').addEventListener('click', () => {
+  const newName = document.getElementById('pd-meta-name-input').value.trim();
+  if (!newName) { showToast('اسم المشروع لا يمكن أن يكون فارغًا', true); return; }
+
+  const oldName = currentProjectDetail;
+  if (newName !== oldName && state.projects.includes(newName)) {
+    showToast('يوجد بالفعل مشروع بهذا الاسم', true);
+    return;
+  }
+
+  // لو الاسم اتغيّر فعليًا، نحدّث كل مكان في السيستم بيشير للمشروع ده بالاسم القديم
+  if (newName !== oldName) {
+    const idx = state.projects.indexOf(oldName);
+    if (idx >= 0) state.projects[idx] = newName;
+
+    let updatedTxns = 0, updatedAttendance = 0, updatedAssets = 0;
+    state.transactions.forEach(t => { if (t.project === oldName) { t.project = newName; updatedTxns++; } });
+    state.attendance.forEach(a => { if (a.projectId === oldName) { a.projectId = newName; updatedAttendance++; } });
+    state.assets.forEach(a => { if (a.project === oldName) { a.project = newName; updatedAssets++; } });
+
+    // نقل بيانات المشروع الإضافية (الحالة، الميزانية، التواريخ) والربط بالعميل للاسم الجديد
+    if (state.projectMeta[oldName]) {
+      state.projectMeta[newName] = state.projectMeta[oldName];
+      delete state.projectMeta[oldName];
+    }
+    if (state.projectCustomerLinks[oldName]) {
+      state.projectCustomerLinks[newName] = state.projectCustomerLinks[oldName];
+      delete state.projectCustomerLinks[oldName];
+    }
+
+    logAuditEvent('تعديل اسم مشروع', `من "${oldName}" إلى "${newName}" — تم تحديث ${updatedTxns} حركة، ${updatedAttendance} حضور، ${updatedAssets} أصل`);
+    currentProjectDetail = newName;
+    showToast(`تم تعديل اسم المشروع، وتحديث ${updatedTxns} حركة و${updatedAttendance} يوم حضور مرتبطين به`);
+  }
+
   const meta = getProjectMeta(currentProjectDetail);
   meta.status = document.getElementById('pd-meta-status-input').value;
   meta.budget = parseFloat(document.getElementById('pd-meta-budget-input').value) || 0;
@@ -4679,7 +4802,7 @@ document.getElementById('pd-meta-save-btn').addEventListener('click', () => {
   }
 
   saveState();
-  showToast('تم تحديث بيانات المشروع بنجاح');
+  if (newName === oldName) showToast('تم تحديث بيانات المشروع بنجاح');
   renderProjectDetail();
 });
 
@@ -4695,6 +4818,8 @@ function renderCustomersPage() {
   tbody.innerHTML = '';
   rows.forEach(r => {
     const margin = r.revenue > 0 ? (r.profit / r.revenue * 100) : (r.expense > 0 ? -100 : 0);
+    const isLinkedElsewhere = Object.values(state.projectCustomerLinks).includes(r.name);
+    const hasNoActivity = r.revenue === 0 && r.expense === 0 && r.projectCount === 0 && !isLinkedElsewhere;
     const tr = document.createElement('tr');
     tr.style.cursor = 'pointer';
     tr.innerHTML = `
@@ -4704,8 +4829,28 @@ function renderCustomersPage() {
       <td class="text-left" style="color:var(--danger)">${fmt(r.expense)}</td>
       <td class="text-left" style="font-weight:700;color:${r.profit >= 0 ? 'var(--success)' : 'var(--danger)'}">${fmt(r.profit)}</td>
       <td class="text-left">${r.revenue > 0 ? margin.toFixed(0) + '%' : '—'}</td>
+      <td></td>
     `;
     tr.addEventListener('click', () => { currentCustomerDetail = r.name; navigateToPage('customer-detail-page'); });
+
+    if (hasNoActivity) {
+      const actionsCell = tr.lastElementChild;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'icon-btn';
+      delBtn.textContent = '🗑️';
+      delBtn.title = 'حذف العميل (لا توجد عليه أي حركات أو مشاريع مرتبطة)';
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!confirm(`هل تريد حذف العميل "${r.name}"؟ هذا الإجراء لا يمكن التراجع عنه.`)) return;
+        state.customers = state.customers.filter(c => c !== r.name);
+        logAuditEvent('حذف عميل', r.name);
+        saveState();
+        renderCustomersPage();
+        showToast(`تم حذف العميل "${r.name}"`);
+      });
+      actionsCell.appendChild(delBtn);
+    }
+
     tbody.appendChild(tr);
   });
 }
@@ -4944,6 +5089,12 @@ document.getElementById('treasury-transfer-btn').addEventListener('click', () =>
   document.getElementById('transfer-preview-note').textContent = '';
   document.getElementById('transfer-form-section').style.display = 'block';
   document.getElementById('transfer-form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+document.getElementById('ba-transfer-btn').addEventListener('click', () => {
+  navigateToPage('treasury-page');
+  // نستنى لحد ما صفحة العهدة تخلص render، وبعدين نفتح فورم التحويل تلقائيًا
+  setTimeout(() => { document.getElementById('treasury-transfer-btn').click(); }, 50);
 });
 
 document.getElementById('transfer-dir-bank-to-custody').addEventListener('click', () => {
@@ -5743,6 +5894,7 @@ function renderDashboard() {
   const in7Days = new Date(); in7Days.setDate(in7Days.getDate() + 7);
   const in7DaysStr = in7Days.toISOString().slice(0, 10);
   const dueForecasts = state.forecasts.filter(f => !f.collected && f.dueDate <= in7DaysStr);
+  const duePayables = state.payables.filter(p => !p.paid && p.dueDate <= in7DaysStr);
 
   // عدد المشاريع الخسرانة حاليًا (كل الأوقات)
   const losingProjectsCount = state.projects.filter(p => {
@@ -5755,7 +5907,7 @@ function renderDashboard() {
       <p class="action-card-title"><span class="action-card-icon">🏦</span>البنك</p>
       <p class="action-card-value">${fmt(bankBalance)}</p>
       <p class="action-card-sub">الرصيد الحالي</p>
-      <div class="action-card-btn" data-nav="treasury-page">حركة جديدة ↗</div>
+      <div class="action-card-btn" data-nav="bank-accounts-page">حركة جديدة ↗</div>
     </div>
     <div class="action-card">
       <p class="action-card-title"><span class="action-card-icon">👥</span>مستحقات العمالة</p>
@@ -5764,9 +5916,10 @@ function renderDashboard() {
       <div class="action-card-btn" data-nav="labor-dues-page">سداد ↗</div>
     </div>
     <div class="action-card">
-      <p class="action-card-title"><span class="action-card-icon">🧾</span>حركة جديدة</p>
-      <p class="action-card-sub" style="margin-top:6px">تسجيل إيراد أو مصروف بسرعة من هنا مباشرة.</p>
-      <div class="action-card-btn" data-nav="new-txn-page" style="margin-top:auto">تسجيل ↗</div>
+      <p class="action-card-title"><span class="action-card-icon">📋</span>دفعات واجبة السداد</p>
+      <p class="action-card-value" style="color:${duePayables.length > 0 ? 'var(--warning)' : 'var(--success)'}">${duePayables.length} بند</p>
+      <p class="action-card-sub">خلال 7 أيام أو متأخرة</p>
+      <div class="action-card-btn" data-nav="payables-page">عرض ↗</div>
     </div>
     <div class="action-card">
       <p class="action-card-title"><span class="action-card-icon">💼</span>العهدة</p>
@@ -5802,6 +5955,7 @@ function renderDashboard() {
   renderDashboardAlerts();
   renderForecastDashboardAlert();
   renderDashboardMonthlyChart();
+  renderDashboardCustomCards();
 
   // أعلى المشاريع ربحية
   const topProjects = state.projects.map(p => ({ name: p, ...projectAgg(p, { from: period.from, to: period.to }) }))
@@ -5859,6 +6013,67 @@ function renderDashboard() {
     recentBody.appendChild(tr);
   });
 }
+
+/* ============ بطاقات الداشبورد المخصصة (اختيار المستخدم) ============ */
+function renderDashboardCustomCards() {
+  const section = document.getElementById('dash-custom-cards-section');
+  const grid = document.getElementById('dash-custom-cards');
+  const selectedPages = state.dashboardCustomCards;
+
+  if (selectedPages.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  grid.innerHTML = '';
+  selectedPages.forEach(pageId => {
+    const item = ALL_DASHBOARD_LINKABLE_PAGES.find(p => p.page === pageId);
+    if (!item) return; // الصفحة اتشالت من السيستم بعد ما المستخدم اختارها، نتجاهلها بأمان
+    const card = document.createElement('div');
+    card.className = 'action-card';
+    card.innerHTML = `
+      <p class="action-card-title"><span class="action-card-icon">${item.icon}</span>${escapeHtml(item.title)}</p>
+      <div class="action-card-btn" style="margin-top:auto">فتح ↗</div>
+    `;
+    card.querySelector('.action-card-btn').addEventListener('click', () => navigateToPage(item.page));
+    grid.appendChild(card);
+  });
+}
+
+document.getElementById('dash-customize-btn').addEventListener('click', () => {
+  const listEl = document.getElementById('dash-customize-list');
+  listEl.innerHTML = '';
+  ALL_DASHBOARD_LINKABLE_PAGES.forEach(item => {
+    const row = document.createElement('label');
+    row.style.display = 'flex';
+    row.style.alignItems = 'center';
+    row.style.gap = '10px';
+    row.style.padding = '8px 4px';
+    row.style.borderBottom = '1px solid var(--border)';
+    row.style.cursor = 'pointer';
+    row.style.fontSize = '13px';
+    row.innerHTML = `
+      <input type="checkbox" value="${item.page}" ${state.dashboardCustomCards.includes(item.page) ? 'checked' : ''}>
+      <span>${item.icon} ${escapeHtml(item.title)}</span>
+    `;
+    listEl.appendChild(row);
+  });
+  document.getElementById('dash-customize-modal-overlay').style.display = 'flex';
+});
+
+document.getElementById('dash-customize-cancel-btn').addEventListener('click', () => {
+  document.getElementById('dash-customize-modal-overlay').style.display = 'none';
+});
+
+document.getElementById('dash-customize-save-btn').addEventListener('click', () => {
+  const checked = [...document.querySelectorAll('#dash-customize-list input[type="checkbox"]:checked')].map(el => el.value);
+  state.dashboardCustomCards = checked;
+  saveState();
+  document.getElementById('dash-customize-modal-overlay').style.display = 'none';
+  renderDashboardCustomCards();
+  showToast('تم تحديث اختصارات الداشبورد بنجاح');
+});
 
 /* =====================================================================
    وحدة العمالة: العمال + الحضور اليومي + المستحقات + السداد + السلف والخصومات
@@ -9438,8 +9653,10 @@ function renderForecastDashboardAlert() {
 
   const overdue = state.forecasts.filter(f => !f.collected && f.dueDate < today);
   const dueSoon = state.forecasts.filter(f => !f.collected && f.dueDate >= today && f.dueDate <= in7DaysStr);
+  const overduePayables = state.payables.filter(p => !p.paid && p.dueDate < today);
+  const dueSoonPayables = state.payables.filter(p => !p.paid && p.dueDate >= today && p.dueDate <= in7DaysStr);
 
-  if (overdue.length === 0 && dueSoon.length === 0) {
+  if (overdue.length === 0 && dueSoon.length === 0 && overduePayables.length === 0 && dueSoonPayables.length === 0) {
     alertContainer.style.display = 'none';
     return;
   }
@@ -9456,13 +9673,33 @@ function renderForecastDashboardAlert() {
       </div>
     </div>`;
   }
+  if (overduePayables.length > 0) {
+    const overduePayablesTotal = overduePayables.reduce((s, p) => s + p.amount, 0);
+    html += `<div class="alert-card danger" style="margin-bottom:10px">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body">
+        <p class="alert-title">${overduePayables.length} دفعة واجبة السداد متأخرة بإجمالي ${fmt(overduePayablesTotal)} ج.م</p>
+        <p class="alert-desc">${escapeHtml(overduePayables[0].desc)}${overduePayables.length > 1 ? ` و ${overduePayables.length - 1} بند آخر` : ''} — راجع صفحة "دفعات واجبة السداد"</p>
+      </div>
+    </div>`;
+  }
   if (dueSoon.length > 0) {
     const dueSoonTotal = dueSoon.reduce((s, f) => s + f.amount, 0);
-    html += `<div class="alert-card warning">
+    html += `<div class="alert-card warning" style="margin-bottom:10px">
       <span class="alert-icon">🔔</span>
       <div class="alert-body">
         <p class="alert-title">${dueSoon.length} تحصيل مستحق خلال 7 أيام بإجمالي ${fmt(dueSoonTotal)} ج.م</p>
         <p class="alert-desc">${escapeHtml(dueSoon[0].desc)}${dueSoon.length > 1 ? ` و ${dueSoon.length - 1} بند آخر` : ''}</p>
+      </div>
+    </div>`;
+  }
+  if (dueSoonPayables.length > 0) {
+    const dueSoonPayablesTotal = dueSoonPayables.reduce((s, p) => s + p.amount, 0);
+    html += `<div class="alert-card warning">
+      <span class="alert-icon">🔔</span>
+      <div class="alert-body">
+        <p class="alert-title">${dueSoonPayables.length} دفعة واجبة السداد خلال 7 أيام بإجمالي ${fmt(dueSoonPayablesTotal)} ج.م</p>
+        <p class="alert-desc">${escapeHtml(dueSoonPayables[0].desc)}${dueSoonPayables.length > 1 ? ` و ${dueSoonPayables.length - 1} بند آخر` : ''}</p>
       </div>
     </div>`;
   }
@@ -9993,6 +10230,20 @@ document.getElementById('audit-run-integrity-check').addEventListener('click', (
       items: orphanNames
     });
   }
+
+  // فحص 5: تطابق عدد المشاريع الكلي مع مجموع المشاريع المرتبطة بكل العملاء (يدوي + عن طريق حركات)
+  const allLinkedProjectNames = new Set();
+  state.customers.forEach(c => {
+    customerLinkedProjects(c).forEach(p => allLinkedProjectNames.add(p.name));
+  });
+  const unlinkedProjects = state.projects.filter(p => !allLinkedProjectNames.has(p));
+  issues.push({
+    title: `📊 مطابقة المشاريع بالعملاء: ${allLinkedProjectNames.size} من ${state.projects.length} مشروع مرتبط بعميل`,
+    desc: unlinkedProjects.length > 0
+      ? `${unlinkedProjects.length} مشروع مش مرتبط بأي عميل حاليًا (لا يدويًا ولا عن طريق حركات) — لو ده غير متوقع، راجعهم من صفحة تفاصيل كل مشروع`
+      : 'كل المشاريع مرتبطة بعميل واحد على الأقل ✅',
+    items: unlinkedProjects
+  });
 
   if (issues.length === 0) {
     resultsEl.innerHTML = `<div class="alert-card success"><span class="alert-icon">✅</span><div class="alert-body"><p class="alert-title">مفيش مشاكل تطابق ظاهرة</p><p class="alert-desc">أسماء المشاريع والعملاء متسقة، ومفيش بيانات يتيمة</p></div></div>`;
