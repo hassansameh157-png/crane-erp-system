@@ -802,10 +802,16 @@
         <button class="btn btn-sm" id="txn-filter-clear">إعادة تعيين</button>
       </div>
 
+      <div id="txns-bulk-actions-bar" style="display:none;align-items:center;gap:10px;background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:10px 14px;margin-bottom:12px">
+        <span style="font-size:13px;font-weight:700;color:var(--accent-dark)" id="txns-bulk-selected-count">0 حركة محددة</span>
+        <button class="btn btn-sm btn-danger-ghost" id="txns-bulk-delete-btn">🗑️ حذف المحدد</button>
+        <button class="btn btn-sm" id="txns-bulk-clear-selection-btn">إلغاء التحديد</button>
+      </div>
+
       <div class="card card-tight">
         <table class="mono-table">
           <thead>
-            <tr><th>م</th><th>التاريخ</th><th>النوع</th><th>الحساب</th><th>المشروع</th><th>العميل</th><th>البيان</th><th class="text-left">المبلغ</th><th>الخزينة</th><th></th></tr>
+            <tr><th style="width:34px"><input type="checkbox" id="txns-select-all"></th><th>م</th><th>التاريخ</th><th>النوع</th><th>الحساب</th><th>المشروع</th><th>العميل</th><th>البيان</th><th class="text-left">المبلغ</th><th>الخزينة</th><th></th></tr>
           </thead>
           <tbody id="txns-table-body"></tbody>
         </table>
@@ -860,7 +866,13 @@
           <div class="card" id="import-mapping-list"></div>
         </div>
 
-        <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px">معاينة الصفوف (أول 50 صف)</p>
+        <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px" id="import-preview-label">معاينة الصفوف (كل الصفوف)</p>
+        <div class="filter-bar" style="margin-bottom:8px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin:0">
+            <input type="checkbox" id="import-show-errors-only">
+            <span>عرض الصفوف اللي بها مشاكل فقط</span>
+          </label>
+        </div>
         <div class="card card-tight" style="margin-bottom:20px">
           <table class="mono-table">
             <thead><tr><th>#</th><th>الحالة</th><th>التاريخ</th><th>النوع</th><th>الحساب</th><th>المشروع</th><th>العميل</th><th>البيان</th><th class="text-left">المبلغ</th><th>الخزينة</th></tr></thead>
@@ -1423,7 +1435,13 @@
           <div class="card" id="att-import-worker-mapping-list"></div>
         </div>
 
-        <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px">معاينة الصفوف (أول 50 صف)</p>
+        <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px" id="att-import-preview-label">معاينة الصفوف (كل الصفوف)</p>
+        <div class="filter-bar" style="margin-bottom:8px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin:0">
+            <input type="checkbox" id="att-import-show-errors-only">
+            <span>عرض الصفوف اللي بها مشاكل فقط</span>
+          </label>
+        </div>
         <div class="card card-tight" style="margin-bottom:20px">
           <table class="mono-table">
             <thead><tr><th>#</th><th>الحالة</th><th>التاريخ</th><th>العامل</th><th>المشروع</th><th>حالة الحضور</th><th class="text-left">إضافي</th><th class="text-left">بدلات</th><th class="text-left">المستحق</th><th>الوصف</th></tr></thead>
@@ -4090,7 +4108,13 @@ function renderImportPreview() {
 
   const tbody = document.getElementById('import-preview-body');
   tbody.innerHTML = '';
-  importParsedRows.slice(0, 50).forEach(r => {
+  const showErrorsOnly = document.getElementById('import-show-errors-only').checked;
+  const rowsToShow = showErrorsOnly ? importParsedRows.filter(r => !r.valid) : importParsedRows;
+  document.getElementById('import-preview-label').textContent = showErrorsOnly
+    ? `معاينة الصفوف (${rowsToShow.length} صف به مشاكل من أصل ${importParsedRows.length})`
+    : `معاينة الصفوف (كل الـ ${importParsedRows.length} صف)`;
+
+  rowsToShow.forEach(r => {
     const tr = document.createElement('tr');
     if (!r.valid) tr.style.background = 'var(--danger-bg)';
     const statusCell = r.valid
@@ -4112,12 +4136,14 @@ function renderImportPreview() {
     tbody.appendChild(tr);
   });
 
-  if (importParsedRows.length > 50) {
-    const infoRow = document.createElement('tr');
-    infoRow.innerHTML = `<td colspan="10" style="text-align:center;color:var(--ink-mute);padding:12px">... و ${importParsedRows.length - 50} صف إضافي مش ظاهرين في المعاينة، بس هيتم استيرادهم لو صحيحين</td>`;
-    tbody.appendChild(infoRow);
+  if (rowsToShow.length === 0) {
+    const emptyRow = document.createElement('tr');
+    emptyRow.innerHTML = `<td colspan="10" style="text-align:center;color:var(--ink-mute);padding:12px">لا توجد صفوف بها مشاكل 🎉</td>`;
+    tbody.appendChild(emptyRow);
   }
 }
+
+document.getElementById('import-show-errors-only').addEventListener('change', renderImportPreview);
 
 document.getElementById('import-cancel-btn').addEventListener('click', () => {
   importParsedRows = [];
@@ -4227,6 +4253,8 @@ function renderTxnsPage() {
   renderTxnsTable();
 }
 
+let selectedTxnIds = new Set();
+
 function renderTxnsTable() {
   const rows = getFilteredTxns();
   document.getElementById('txns-count-label').textContent = `${rows.length} حركة من إجمالي ${state.transactions.length}`;
@@ -4234,11 +4262,16 @@ function renderTxnsTable() {
   tbody.innerHTML = '';
   document.getElementById('txns-empty').style.display = rows.length === 0 ? 'block' : 'none';
 
+  // نشيل من التحديد أي حركة مش ظاهرة حاليًا بسبب فلترة (تفادي "تحديد خفي" مربك)
+  const visibleIds = new Set(rows.map(t => t.id));
+  selectedTxnIds.forEach(id => { if (!visibleIds.has(id)) selectedTxnIds.delete(id); });
+
   rows.forEach(t => {
     const tr = document.createElement('tr');
     const amountColor = t.kind === 'إيراد' ? 'var(--success)' : 'var(--danger)';
     const amountSign = t.kind === 'إيراد' ? '+' : '-';
     tr.innerHTML = `
+      <td></td>
       <td>${t.seq}</td>
       <td>${fmtDate(t.date)}</td>
       <td></td>
@@ -4253,8 +4286,20 @@ function renderTxnsTable() {
 
     const cells = tr.querySelectorAll('td');
 
+    // خلية التحديد الجماعي
+    const selectCell = cells[0];
+    const selectCheckbox = document.createElement('input');
+    selectCheckbox.type = 'checkbox';
+    selectCheckbox.checked = selectedTxnIds.has(t.id);
+    selectCheckbox.addEventListener('change', () => {
+      if (selectCheckbox.checked) selectedTxnIds.add(t.id);
+      else selectedTxnIds.delete(t.id);
+      updateTxnsBulkActionsBar();
+    });
+    selectCell.appendChild(selectCheckbox);
+
     // خلية التاريخ — قابلة للتعديل بحقل تاريخ عادي
-    const dateCell = cells[1];
+    const dateCell = cells[2];
     makeEditableInputCell(dateCell, t.date, 'date', fmtDate, (newVal) => {
       const oldVal = t.date;
       const oldId = t.id;
@@ -4267,7 +4312,7 @@ function renderTxnsTable() {
     });
 
     // خلية النوع (إيراد/مصروف) — قابلة للتعديل. تغييرها بيغيّر قائمة الحسابات المتاحة تلقائيًا
-    const kindCell = cells[2];
+    const kindCell = cells[3];
     renderEditableKindCell(kindCell, t.kind, (newKind) => {
       t.kind = newKind;
       // لو الحساب الحالي مش موجود في قائمة حسابات النوع الجديد، نرجّعه لأول حساب متاح بدل ما يفضل غلط
@@ -4281,7 +4326,7 @@ function renderTxnsTable() {
     });
 
     // خلية الحساب — قابلة للتعديل (دروب ليست بحسابات نفس النوع: إيراد أو مصروف)
-    const accountCell = cells[3];
+    const accountCell = cells[4];
     const accountOptions = t.kind === 'إيراد' ? state.accounts.revenue : state.accounts.expense;
     makeEditableCell(accountCell, t.account, accountOptions, (newVal) => {
       t.account = newVal;
@@ -4291,7 +4336,7 @@ function renderTxnsTable() {
     });
 
     // خلية المشروع — قابلة للتعديل بالضغط عليها (دروب ليست بأسماء المشاريع)
-    const projectCell = cells[4];
+    const projectCell = cells[5];
     makeEditableCell(projectCell, t.project, state.projects, (newVal) => {
       t.project = newVal;
       saveState();
@@ -4300,7 +4345,7 @@ function renderTxnsTable() {
     });
 
     // خلية العميل — نفس الفكرة
-    const customerCell = cells[5];
+    const customerCell = cells[6];
     makeEditableCell(customerCell, t.customer, state.customers, (newVal) => {
       t.customer = newVal;
       saveState();
@@ -4309,7 +4354,7 @@ function renderTxnsTable() {
     });
 
     // خلية الخزينة (طريقة الدفع: بنك أو عهدة) — قابلة للتعديل بنفس أسلوب البادچ
-    const treasuryCell = cells[8];
+    const treasuryCell = cells[9];
     renderEditableTreasuryCell(treasuryCell, t.treasury, (newVal) => {
       t.treasury = newVal;
       saveState();
@@ -4318,7 +4363,7 @@ function renderTxnsTable() {
     });
 
     // خلية المبلغ — قابلة للتعديل بحقل رقمي، مع الحفاظ على لون وإشارة النوع (+ إيراد / - مصروف)
-    const amountCell = cells[7];
+    const amountCell = cells[8];
     makeEditableInputCell(
       amountCell, t.amount, 'number',
       (v) => `${amountSign}${fmt(v)}`,
@@ -4343,6 +4388,7 @@ function renderTxnsTable() {
       if (!confirm(`هل تريد حذف هذه الحركة؟\n"${t.desc}" — ${fmt(t.amount)} ج.م`)) return;
       logAuditEvent('حذف حركة', `${t.kind} — ${t.desc} — ${fmt(t.amount)} ج.م (${fmtDate(t.date)})`);
       state.transactions = state.transactions.filter(x => x.id !== t.id);
+      selectedTxnIds.delete(t.id);
       saveState();
       showToast('تم حذف الحركة');
       renderTxnsTable();
@@ -4350,7 +4396,52 @@ function renderTxnsTable() {
     tr.querySelector('td:last-child').appendChild(delBtn);
     tbody.appendChild(tr);
   });
+
+  updateTxnsBulkActionsBar();
+  document.getElementById('txns-select-all').checked = rows.length > 0 && rows.every(t => selectedTxnIds.has(t.id));
 }
+
+/* ============ التحديد والحذف الجماعي ============ */
+function updateTxnsBulkActionsBar() {
+  const bar = document.getElementById('txns-bulk-actions-bar');
+  const count = selectedTxnIds.size;
+  if (count === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'flex';
+  document.getElementById('txns-bulk-selected-count').textContent = `${count} حركة محددة`;
+}
+
+document.getElementById('txns-select-all').addEventListener('change', (e) => {
+  const rows = getFilteredTxns();
+  if (e.target.checked) {
+    rows.forEach(t => selectedTxnIds.add(t.id));
+  } else {
+    rows.forEach(t => selectedTxnIds.delete(t.id));
+  }
+  renderTxnsTable();
+});
+
+document.getElementById('txns-bulk-clear-selection-btn').addEventListener('click', () => {
+  selectedTxnIds.clear();
+  renderTxnsTable();
+});
+
+document.getElementById('txns-bulk-delete-btn').addEventListener('click', () => {
+  const count = selectedTxnIds.size;
+  if (count === 0) return;
+  const totalAmount = state.transactions.filter(t => selectedTxnIds.has(t.id)).reduce((s, t) => s + t.amount, 0);
+  if (!confirm(`هل تريد حذف ${count} حركة محددة بإجمالي ${fmt(totalAmount)} ج.م؟\n\n⚠️ هذا الإجراء لا يمكن التراجع عنه.`)) return;
+
+  const deletedTxns = state.transactions.filter(t => selectedTxnIds.has(t.id));
+  state.transactions = state.transactions.filter(t => !selectedTxnIds.has(t.id));
+  logAuditEvent('حذف جماعي لحركات', `تم حذف ${count} حركة بإجمالي ${fmt(totalAmount)} ج.م: ${deletedTxns.slice(0, 5).map(t => t.desc).join('، ')}${deletedTxns.length > 5 ? ' وغيرها' : ''}`);
+  selectedTxnIds.clear();
+  saveState();
+  renderTxnsTable();
+  showToast(`تم حذف ${count} حركة بنجاح`);
+});
 
 /* خلية جدول قابلة للتعديل: تظهر كنص عادي، وعند الضغط عليها تتحول لقائمة اختيار (dropdown) */
 function makeEditableCell(cellEl, currentValue, options, onSave) {
@@ -6952,7 +7043,13 @@ function renderAttImportPreview() {
 
   const tbody = document.getElementById('att-import-preview-body');
   tbody.innerHTML = '';
-  attImportParsedRows.slice(0, 50).forEach(r => {
+  const showErrorsOnly = document.getElementById('att-import-show-errors-only').checked;
+  const rowsToShow = showErrorsOnly ? attImportParsedRows.filter(r => !r.valid) : attImportParsedRows;
+  document.getElementById('att-import-preview-label').textContent = showErrorsOnly
+    ? `معاينة الصفوف (${rowsToShow.length} صف به مشاكل من أصل ${attImportParsedRows.length})`
+    : `معاينة الصفوف (كل الـ ${attImportParsedRows.length} صف)`;
+
+  rowsToShow.forEach(r => {
     const tr = document.createElement('tr');
     if (!r.valid) tr.style.background = 'var(--danger-bg)';
     const statusCell = r.valid
@@ -6974,12 +7071,14 @@ function renderAttImportPreview() {
     tbody.appendChild(tr);
   });
 
-  if (attImportParsedRows.length > 50) {
-    const infoRow = document.createElement('tr');
-    infoRow.innerHTML = `<td colspan="10" style="text-align:center;color:var(--ink-mute);padding:12px">... و ${attImportParsedRows.length - 50} صف إضافي مش ظاهرين في المعاينة، بس هيتم استيرادهم لو صحيحين</td>`;
-    tbody.appendChild(infoRow);
+  if (rowsToShow.length === 0) {
+    const emptyRow = document.createElement('tr');
+    emptyRow.innerHTML = `<td colspan="10" style="text-align:center;color:var(--ink-mute);padding:12px">لا توجد صفوف بها مشاكل 🎉</td>`;
+    tbody.appendChild(emptyRow);
   }
 }
+
+document.getElementById('att-import-show-errors-only').addEventListener('change', renderAttImportPreview);
 
 document.getElementById('att-import-cancel-btn').addEventListener('click', () => {
   attImportParsedRows = [];
