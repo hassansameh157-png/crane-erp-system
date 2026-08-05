@@ -786,6 +786,10 @@
 
       <div class="filter-bar">
         <input type="text" id="txn-filter-search" placeholder="ابحث في البيان..." style="min-width:200px">
+        <label style="margin:0">من:</label>
+        <input type="date" id="txn-filter-from-date" style="width:150px">
+        <label style="margin:0">إلى:</label>
+        <input type="date" id="txn-filter-to-date" style="width:150px">
         <select id="txn-filter-kind">
           <option value="">كل الأنواع</option>
           <option value="إيراد">إيراد</option>
@@ -4232,6 +4236,8 @@ function populateTxnFilters() {
 
 function getFilteredTxns() {
   const search = document.getElementById('txn-filter-search').value.trim().toLowerCase();
+  const fromDate = document.getElementById('txn-filter-from-date').value;
+  const toDate = document.getElementById('txn-filter-to-date').value;
   const kind = document.getElementById('txn-filter-kind').value;
   const account = document.getElementById('txn-filter-account').value;
   const project = document.getElementById('txn-filter-project').value;
@@ -4240,6 +4246,8 @@ function getFilteredTxns() {
 
   return [...state.transactions]
     .filter(t => !search || t.desc.toLowerCase().includes(search))
+    .filter(t => !fromDate || t.date >= fromDate)
+    .filter(t => !toDate || t.date <= toDate)
     .filter(t => !kind || t.kind === kind)
     .filter(t => !account || t.account === account)
     .filter(t => !project || t.project === project)
@@ -4607,12 +4615,14 @@ function renderEditableKindCell(cellEl, currentValue, onSave) {
   });
 }
 
-['txn-filter-search','txn-filter-kind','txn-filter-account','txn-filter-project','txn-filter-customer','txn-filter-treasury'].forEach(id => {
+['txn-filter-search','txn-filter-from-date','txn-filter-to-date','txn-filter-kind','txn-filter-account','txn-filter-project','txn-filter-customer','txn-filter-treasury'].forEach(id => {
   document.getElementById(id).addEventListener('input', renderTxnsTable);
   document.getElementById(id).addEventListener('change', renderTxnsTable);
 });
 document.getElementById('txn-filter-clear').addEventListener('click', () => {
   document.getElementById('txn-filter-search').value = '';
+  document.getElementById('txn-filter-from-date').value = '';
+  document.getElementById('txn-filter-to-date').value = '';
   document.getElementById('txn-filter-kind').value = '';
   document.getElementById('txn-filter-account').value = '';
   document.getElementById('txn-filter-project').value = '';
