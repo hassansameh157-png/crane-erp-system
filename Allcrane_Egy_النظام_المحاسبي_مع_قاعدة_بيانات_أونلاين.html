@@ -495,6 +495,7 @@
     <div class="nav-section-label">العمالة</div>
     <div class="nav-item" data-page="attendance-page"><span class="nav-icon">🗓️</span><span>تسجيل الحضور</span></div>
     <div class="nav-item" data-page="attendance-import-page"><span class="nav-icon">⬆️</span><span>استيراد حضور</span></div>
+    <div class="nav-item" data-page="work-desc-report-page"><span class="nav-icon">📝</span><span>وصف الشغل</span></div>
     <div class="nav-item" data-page="labor-dues-page"><span class="nav-icon">💰</span><span>مستحقات العمالة</span></div>
     <div class="nav-item" data-page="advances-page"><span class="nav-icon">📋</span><span>السلف والخصومات</span></div>
     <div class="nav-item" data-page="labor-report-page"><span class="nav-icon">📈</span><span>تقرير قبض العمالة</span></div>
@@ -540,6 +541,7 @@
       </div>
       <div class="mobile-drawer-body">
         <div class="nav-section-label">المتابعة</div>
+        <div class="nav-item mobile-drawer-item" data-page="attendance-page"><span class="nav-icon">🗓️</span><span>تسجيل الحضور</span></div>
         <div class="nav-item mobile-drawer-item" data-page="projects-page"><span class="nav-icon">📁</span><span>المشروعات</span></div>
         <div class="nav-item mobile-drawer-item" data-page="customers-page"><span class="nav-icon">🧑‍💼</span><span>العملاء</span></div>
         <div class="nav-item mobile-drawer-item" data-page="treasury-page"><span class="nav-icon">💼</span><span>العهدة</span></div>
@@ -549,6 +551,7 @@
 
         <div class="nav-section-label">العمالة</div>
         <div class="nav-item mobile-drawer-item" data-page="attendance-import-page"><span class="nav-icon">⬆️</span><span>استيراد حضور</span></div>
+        <div class="nav-item mobile-drawer-item" data-page="work-desc-report-page"><span class="nav-icon">📝</span><span>وصف الشغل</span></div>
         <div class="nav-item mobile-drawer-item" data-page="labor-dues-page"><span class="nav-icon">💰</span><span>مستحقات العمالة</span></div>
         <div class="nav-item mobile-drawer-item" data-page="advances-page"><span class="nav-icon">📋</span><span>السلف والخصومات</span></div>
         <div class="nav-item mobile-drawer-item" data-page="labor-report-page"><span class="nav-icon">📈</span><span>تقرير قبض العمالة</span></div>
@@ -1369,7 +1372,11 @@
 
       <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px">سجل الحضور المسجل</p>
       <div class="filter-bar">
-        <input type="date" id="att-filter-date" style="width:150px">
+        <label style="margin:0">من:</label>
+        <input type="date" id="att-filter-from-date" style="width:150px">
+        <label style="margin:0">إلى:</label>
+        <input type="date" id="att-filter-to-date" style="width:150px">
+        <input type="text" id="att-filter-desc" placeholder="ابحث في الوصف (اسم عميل، نوع شغل...)" style="min-width:220px">
         <select id="att-filter-worker"><option value="">كل العمال</option></select>
         <select id="att-filter-project"><option value="">كل المشاريع</option></select>
         <button class="btn btn-sm" id="att-filter-clear">إعادة تعيين</button>
@@ -1460,6 +1467,49 @@
       </div>
     </div>
 
+    <!-- ============ وصف الشغل (تقرير محاسبة العملاء) ============ -->
+    <div class="page" id="work-desc-report-page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">وصف الشغل</h1>
+          <p class="page-sub">كل حركات الحضور مع وصفها — لمحاسبة العملاء بسهولة</p>
+        </div>
+        <div class="header-actions">
+          <div class="export-toolbar" data-export-target="work-desc-report-page"></div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <label style="margin:0">من:</label>
+        <input type="date" id="wdr-from-date" style="width:150px">
+        <label style="margin:0">إلى:</label>
+        <input type="date" id="wdr-to-date" style="width:150px">
+        <select id="wdr-filter-customer"><option value="">كل العملاء</option></select>
+        <select id="wdr-filter-project"><option value="">كل المشاريع</option></select>
+        <select id="wdr-filter-worker"><option value="">كل العمال</option></select>
+        <button class="btn btn-sm" id="wdr-filter-clear">إعادة تعيين</button>
+      </div>
+
+      <div class="stat-grid cols-2">
+        <div class="stat-card">
+          <p class="stat-label">عدد أيام الحضور المطابقة</p>
+          <p class="stat-value" id="wdr-count">0</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">إجمالي تكلفة الأيام دي</p>
+          <p class="stat-value" id="wdr-total">0.00</p>
+        </div>
+      </div>
+
+      <div class="card card-tight">
+        <table class="mono-table">
+          <thead><tr><th>التاريخ</th><th>العامل</th><th>المشروع</th><th>العميل</th><th>الوصف (اشتغل إيه)</th><th class="text-left">التكلفة</th></tr></thead>
+          <tbody id="wdr-table-body"></tbody>
+        </table>
+        <div class="empty-state" id="wdr-empty" style="display:none"><div class="icon">📝</div><p>لا توجد حركات حضور بها وصف مطابق للفلتر</p></div>
+      </div>
+    </div>
+
     <!-- ============ LABOR DUES / SETTLEMENT ============ -->
     <div class="page" id="labor-dues-page">
       <div class="page-header">
@@ -1532,6 +1582,7 @@
               </div>
             </div>
           </div>
+          <div id="ld-payment-preview-note" style="display:none;font-size:12.5px;background:var(--surface-2);border-radius:8px;padding:10px 12px;margin-bottom:14px"></div>
           <div style="display:flex;justify-content:flex-end;gap:8px">
             <button class="btn" id="ld-settlement-cancel">إلغاء</button>
             <button class="btn btn-primary" id="ld-settlement-submit">تنفيذ السداد</button>
@@ -3270,6 +3321,7 @@ function computeTreasuryBalance(kind) {
   let net = opening;
   state.transactions.forEach(t => {
     if (t.treasury !== kind) return;
+    if (t.isInternalClearing) return; // قيد تسوية داخلية (زي إغلاق سلفة) — مش حركة نقدية فعلية على الخزينة
     net += (t.kind === 'إيراد' ? t.amount : -t.amount);
   });
   // التحويلات اليدوية بين البنك والعهدة
@@ -3293,6 +3345,7 @@ function computeBankAccountBalance(accountId) {
   state.transactions.forEach(t => {
     if (t.treasury !== 'بنك') return;
     if ((t.bankAccountId || 'default-bank') !== accountId) return;
+    if (t.isInternalClearing) return; // قيد تسوية داخلية — مش حركة نقدية فعلية
     net += (t.kind === 'إيراد' ? t.amount : -t.amount);
   });
   // التحويلات اليدوية القديمة (بنك↔عهدة) بتأثر بس على الحساب الافتراضي حاليًا،
@@ -3619,6 +3672,7 @@ const PAGE_RENDER_HOOKS = {
   'workers-page': renderWorkersPage,
   'attendance-page': renderAttendancePage,
   'attendance-import-page': renderAttendanceImportPage,
+  'work-desc-report-page': renderWorkDescReportPage,
   'labor-dues-page': renderLaborDuesPage,
   'advances-page': renderAdvancesPage,
   'labor-report-page': renderLaborReportPage,
@@ -5456,6 +5510,7 @@ function renderPLPage() {
   const revenueBreakdown = {}, expenseBreakdown = {};
 
   txns.forEach(t => {
+    if (t.account === 'سلف عمالة') return; // حساب وسيط لتسوية السلف — مصروف السلفة الأصلي وقيد الإغلاق يصفّوا بعض، مش إيراد أو مصروف حقيقي على الشركة
     if (t.kind === 'إيراد') {
       totalRevenue += t.amount;
       revenueBreakdown[t.account] = (revenueBreakdown[t.account] || 0) + t.amount;
@@ -6214,9 +6269,17 @@ function workerAdvancesDeductions(workerId) {
   (state.advancesDeductions || []).forEach(a => {
     if (a.workerId !== workerId) return;
     if (a.consumedInMonth) return; // اتخصمت بالفعل في تسوية شهرية سابقة
+    if (a.settled) return; // اتقفلت بالفعل في تسوية يومية سابقة
     if (a.type === 'سلفة') advances += a.amount; else deductions += a.amount;
   });
   return { advances, deductions, total: advances + deductions };
+}
+
+/* السلف المفتوحة (غير مقفولة بعد) لعامل معين، بترتيب الأقدم أولًا — تُستخدم وقت التسوية لتحديد أي سلف تتقفل */
+function openAdvancesForWorker(workerId) {
+  return (state.advancesDeductions || [])
+    .filter(a => a.workerId === workerId && a.type === 'سلفة' && !a.settled && !a.consumedInMonth)
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
 }
 
 /* السلف والخصومات الخاصة بشهر معين لموظف معين (مش مستهلكة في تسوية سابقة) — بتُستخدم في تفصيل سداد الراتب الشهري */
@@ -6707,12 +6770,16 @@ function populateAttendanceFilters() {
 }
 
 function renderAttendanceLog() {
-  const dateFilter = document.getElementById('att-filter-date').value;
+  const fromDate = document.getElementById('att-filter-from-date').value;
+  const toDate = document.getElementById('att-filter-to-date').value;
+  const descFilter = document.getElementById('att-filter-desc').value.trim().toLowerCase();
   const workerFilter = document.getElementById('att-filter-worker').value;
   const projectFilter = document.getElementById('att-filter-project').value;
 
   const rows = [...state.attendance]
-    .filter(a => !dateFilter || a.date === dateFilter)
+    .filter(a => !fromDate || a.date >= fromDate)
+    .filter(a => !toDate || a.date <= toDate)
+    .filter(a => !descFilter || (a.description || '').toLowerCase().includes(descFilter))
     .filter(a => !workerFilter || a.workerId === workerFilter)
     .filter(a => !projectFilter || a.projectId === projectFilter)
     .sort((a, b) => (a.date < b.date ? 1 : -1));
@@ -6763,6 +6830,79 @@ function renderAttendanceLog() {
     tbody.appendChild(tr);
   });
 }
+
+/* =====================================================================
+   وصف الشغل — تقرير محاسبة العملاء بناءً على أوصاف أيام الحضور
+   ===================================================================== */
+function renderWorkDescReportPage() {
+  populateSelect(document.getElementById('wdr-filter-customer'), state.customers, 'كل العملاء', '');
+  populateSelect(document.getElementById('wdr-filter-project'), state.projects, 'كل المشاريع', '');
+
+  const workerSel = document.getElementById('wdr-filter-worker');
+  const currentWorkerVal = workerSel.value;
+  workerSel.innerHTML = '<option value="">كل العمال</option>';
+  state.workers.forEach(w => {
+    const opt = document.createElement('option');
+    opt.value = w.id; opt.textContent = w.name;
+    workerSel.appendChild(opt);
+  });
+  workerSel.value = currentWorkerVal;
+
+  const from = document.getElementById('wdr-from-date').value;
+  const to = document.getElementById('wdr-to-date').value;
+  const customerFilter = document.getElementById('wdr-filter-customer').value;
+  const projectFilter = document.getElementById('wdr-filter-project').value;
+  const workerFilter = document.getElementById('wdr-filter-worker').value;
+
+  const rows = state.attendance
+    .filter(a => a.description && a.description.trim())
+    .filter(a => !from || a.date >= from)
+    .filter(a => !to || a.date <= to)
+    .filter(a => !projectFilter || a.projectId === projectFilter)
+    .filter(a => !workerFilter || a.workerId === workerFilter)
+    .filter(a => {
+      if (!customerFilter) return true;
+      return state.projectCustomerLinks[a.projectId] === customerFilter;
+    })
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  const totalCost = rows.reduce((s, a) => s + a.totalDue, 0);
+  document.getElementById('wdr-count').textContent = rows.length;
+  document.getElementById('wdr-total').textContent = fmt(totalCost);
+
+  const tbody = document.getElementById('wdr-table-body');
+  tbody.innerHTML = '';
+  document.getElementById('wdr-empty').style.display = rows.length === 0 ? 'block' : 'none';
+
+  rows.forEach(a => {
+    const w = state.workers.find(x => x.id === a.workerId);
+    const customerName = state.projectCustomerLinks[a.projectId] || '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${fmtDate(a.date)}</td>
+      <td>${w ? escapeHtml(w.name) : '—'}</td>
+      <td>${escapeHtml(a.projectId)}</td>
+      <td>${escapeHtml(customerName)}</td>
+      <td>${escapeHtml(a.description)}</td>
+      <td class="text-left num" style="font-weight:700">${fmt(a.totalDue)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('wdr-from-date').addEventListener('change', renderWorkDescReportPage);
+document.getElementById('wdr-to-date').addEventListener('change', renderWorkDescReportPage);
+document.getElementById('wdr-filter-customer').addEventListener('change', renderWorkDescReportPage);
+document.getElementById('wdr-filter-project').addEventListener('change', renderWorkDescReportPage);
+document.getElementById('wdr-filter-worker').addEventListener('change', renderWorkDescReportPage);
+document.getElementById('wdr-filter-clear').addEventListener('click', () => {
+  document.getElementById('wdr-from-date').value = '';
+  document.getElementById('wdr-to-date').value = '';
+  document.getElementById('wdr-filter-customer').value = '';
+  document.getElementById('wdr-filter-project').value = '';
+  document.getElementById('wdr-filter-worker').value = '';
+  renderWorkDescReportPage();
+});
 
 /* ============ تعديل سطر حضور كامل ============ */
 let editingAttendanceId = null;
@@ -6853,12 +6993,14 @@ document.getElementById('att-edit-save-btn').addEventListener('click', () => {
   showToast('تم تحديث يوم الحضور بنجاح');
 });
 
-['att-filter-date','att-filter-worker','att-filter-project'].forEach(id => {
+['att-filter-from-date','att-filter-to-date','att-filter-desc','att-filter-worker','att-filter-project'].forEach(id => {
   document.getElementById(id).addEventListener('input', renderAttendanceLog);
   document.getElementById(id).addEventListener('change', renderAttendanceLog);
 });
 document.getElementById('att-filter-clear').addEventListener('click', () => {
-  document.getElementById('att-filter-date').value = '';
+  document.getElementById('att-filter-from-date').value = '';
+  document.getElementById('att-filter-to-date').value = '';
+  document.getElementById('att-filter-desc').value = '';
   document.getElementById('att-filter-worker').value = '';
   document.getElementById('att-filter-project').value = '';
   renderAttendanceLog();
@@ -7382,26 +7524,61 @@ function openLaborSettlement(workerId) {
   renderLaborSettlementRows();
   document.getElementById('ld-payment-amount').value = '';
   document.getElementById('ld-payment-date').valueAsDate = new Date();
+  document.getElementById('ld-payment-preview-note').style.display = 'none';
   document.getElementById('ld-settlement-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderLaborSettlementStats() {
   const dues = computeWorkerDues(currentSettlementWorkerId);
+  const openAdvTotal = openAdvancesForWorker(currentSettlementWorkerId).reduce((s, a) => s + a.amount, 0);
+  const unpaidDaysTotal = unpaidAttendanceForWorker(currentSettlementWorkerId).reduce((s, a) => s + (a.totalDue - a.paid), 0);
+  const maxAllowed = unpaidDaysTotal + openAdvTotal;
+
   document.getElementById('ld-settlement-stats').innerHTML = `
     <div class="stat-card">
-      <p class="stat-label">إجمالي المستحق (بعد السلف/الخصومات)</p>
-      <p class="stat-value small">${fmt(dues.totalDue - dues.advancesDeductions)}</p>
+      <p class="stat-label">إجمالي أيام العمل غير المسددة</p>
+      <p class="stat-value small">${fmt(unpaidDaysTotal)}</p>
     </div>
     <div class="stat-card">
       <p class="stat-label">مسدد سابقًا</p>
       <p class="stat-value small" style="color:var(--success)">${fmt(dues.totalPaid)}</p>
     </div>
     <div class="stat-card">
-      <p class="stat-label">المتبقي المطلوب سداده</p>
-      <p class="stat-value small" style="color:var(--danger)">${fmt(dues.balanceDue)}</p>
+      <p class="stat-label">الحد الأقصى لهذه الدفعة</p>
+      <p class="stat-value small" style="color:var(--danger)">${fmt(maxAllowed)}</p>
     </div>
   `;
+
+  if (openAdvTotal > 0.005) {
+    document.getElementById('ld-open-advance-banner') && document.getElementById('ld-open-advance-banner').remove();
+    const banner = document.createElement('div');
+    banner.id = 'ld-open-advance-banner';
+    banner.style.cssText = 'background:var(--danger-bg);border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--danger)';
+    banner.innerHTML = `<span>⚠️ سلفة مفتوحة</span><span style="font-weight:700">${fmt(openAdvTotal)}</span>`;
+    document.getElementById('ld-settlement-stats').insertAdjacentElement('afterend', banner);
+  } else {
+    const existing = document.getElementById('ld-open-advance-banner');
+    if (existing) existing.remove();
+  }
 }
+
+function updateLdPaymentPreview() {
+  const amountPaid = parseFloat(document.getElementById('ld-payment-amount').value) || 0;
+  const noteEl = document.getElementById('ld-payment-preview-note');
+  const openAdvTotal = openAdvancesForWorker(currentSettlementWorkerId).reduce((s, a) => s + a.amount, 0);
+
+  if (amountPaid <= 0 || openAdvTotal <= 0.005) {
+    noteEl.style.display = 'none';
+    return;
+  }
+
+  const toAdvance = Math.min(amountPaid, openAdvTotal);
+  const toDays = Math.max(0, amountPaid - toAdvance);
+  noteEl.style.display = 'block';
+  noteEl.innerHTML = `من الدفعة، <b>${fmt(toAdvance)}</b> يقفل السلفة المفتوحة، والباقي <b>${fmt(toDays)}</b> يُطبَّق على أيام العمل`;
+}
+
+document.getElementById('ld-payment-amount').addEventListener('input', updateLdPaymentPreview);
 
 function renderLaborSettlementRows() {
   const container = document.getElementById('ld-settlement-rows');
@@ -7586,10 +7763,15 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
   const amountPaid = parseFloat(document.getElementById('ld-payment-amount').value) || 0;
   const paymentDate = document.getElementById('ld-payment-date').value;
 
+  // الحد الأقصى المسموح = إجمالي أيام العمل الغير مسددة + إجمالي السلف المفتوحة (بما إن المبلغ المدخل بقى إجمالي، مش صافي بعد خصم السلف)
+  const openAdvTotal = openAdvancesForWorker(currentSettlementWorkerId).reduce((s, a) => s + a.amount, 0);
+  const unpaidDaysTotal = unpaidAttendanceForWorker(currentSettlementWorkerId).reduce((s, a) => s + (a.totalDue - a.paid), 0);
+  const maxAllowed = unpaidDaysTotal + openAdvTotal;
+
   if (!paymentDate) { showToast('من فضلك اختر تاريخ السداد', true); return; }
   if (amountPaid <= 0) { showToast('من فضلك أدخل مبلغ سداد أكبر من صفر', true); return; }
-  if (amountPaid > dues.balanceDue + 0.005) {
-    showToast(`المبلغ أكبر من المتبقي المستحق (${fmt(dues.balanceDue)})`, true);
+  if (amountPaid > maxAllowed + 0.005) {
+    showToast(`المبلغ أكبر من إجمالي المستحق (${fmt(maxAllowed)}${openAdvTotal > 0.005 ? ` شامل سلفة مفتوحة ${fmt(openAdvTotal)}` : ''})`, true);
     return;
   }
 
@@ -7600,6 +7782,19 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
   const touchedProjects = {};
   const touchedCustomers = {};
   const datesInvolved = new Set();
+
+  // الخطوة 1: نقفل أي سلف مفتوحة أولًا (الأقدم فالأقدم)، ونحدد تاريخ أول يوم عمل هيتغطى بالباقي بعد القفل
+  const openAdvances = openAdvancesForWorker(currentSettlementWorkerId);
+  let advancesClosedTotal = 0;
+  const closedAdvanceIds = [];
+  for (const adv of openAdvances) {
+    if (remainingToApply <= 0.005) break;
+    const closeAmount = Math.min(adv.amount, remainingToApply);
+    if (closeAmount <= 0.005) continue;
+    advancesClosedTotal += closeAmount;
+    closedAdvanceIds.push({ id: adv.id, closeAmount, fullyClosed: closeAmount >= adv.amount - 0.005 });
+    remainingToApply -= closeAmount;
+  }
 
   for (const a of unpaid) {
     if (remainingToApply <= 0.005) break;
@@ -7612,7 +7807,37 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
     remainingToApply -= applyAmount;
   }
 
-  if (lines.length === 0) { showToast('لا توجد أيام مستحقة لتطبيق السداد عليها', true); return; }
+  if (lines.length === 0 && advancesClosedTotal <= 0.005) { showToast('لا توجد أيام مستحقة أو سلف مفتوحة لتطبيق السداد عليها', true); return; }
+
+  // قيد إغلاق السلفة: بمبلغ سالب على نفس حساب "سلف عمالة"، بتاريخ أول يوم عمل غطّاه المبلغ المتبقي بعد القفل
+  // (لو مفيش أيام اتغطت خالص، ياخد تاريخ السداد نفسه)
+  if (advancesClosedTotal > 0.005) {
+    const sortedDates = [...datesInvolved].sort();
+    const closingDate = sortedDates.length > 0 ? sortedDates[0] : paymentDate;
+    const closingTxn = {
+      id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
+      seq: state.nextTxnNo,
+      date: closingDate,
+      kind: 'إيراد', // قيد إغلاق بمبلغ موجب على نفس حساب المصروف، يعادل تسجيل مصروف سالب (بيصفّر الأثر)
+      account: 'سلف عمالة',
+      project: 'عام / غير محدد',
+      customer: 'عام / غير محدد',
+      desc: `إغلاق سلفة عامل — ${w.name}`,
+      amount: advancesClosedTotal,
+      treasury: ldTreasury,
+      notes: `تم قفل سلفة بقيمة ${fmt(advancesClosedTotal)} ضمن تسوية بتاريخ ${fmtDate(paymentDate)}`,
+      isInternalClearing: true,
+      laborAdvanceClosing: { workerId: w.id, closedAdvanceIds: closedAdvanceIds.map(c => c.id) }
+    };
+    state.transactions.push(closingTxn);
+    state.nextTxnNo += 1;
+
+    // نعلّم السلف المقفولة عشان متتحسبش تاني كذمة مفتوحة
+    closedAdvanceIds.forEach(c => {
+      const advRecord = state.advancesDeductions.find(a => a.id === c.id);
+      if (advRecord && c.fullyClosed) advRecord.settled = true;
+    });
+  }
 
   // نوزّع السداد على حركة منفصلة لكل مشروع، بمبلغ فعلي يعكس نصيب كل مشروع من الأيام المسددة
   // (بدل ما تتحمّل قيمة السداد بالكامل على مشروع واحد بس)
@@ -8587,6 +8812,41 @@ const EXPORT_DATA_PROVIDERS = {
         columns: ['العامل', 'الوظيفة', 'أيام العمل', 'إجمالي المستحق', 'مسدد', 'الرصيد المفتوح'],
         rows: rows.map(r => [r.w.name, r.w.role || '', r.dues.daysWorked, r.dues.totalDue, r.dues.totalPaid, r.dues.balanceDue])
       }]
+    };
+  },
+  'work-desc-report-page': () => {
+    const from = document.getElementById('wdr-from-date').value;
+    const to = document.getElementById('wdr-to-date').value;
+    const customerFilter = document.getElementById('wdr-filter-customer').value;
+    const projectFilter = document.getElementById('wdr-filter-project').value;
+    const workerFilter = document.getElementById('wdr-filter-worker').value;
+
+    const rows = state.attendance
+      .filter(a => a.description && a.description.trim())
+      .filter(a => !from || a.date >= from)
+      .filter(a => !to || a.date <= to)
+      .filter(a => !projectFilter || a.projectId === projectFilter)
+      .filter(a => !workerFilter || a.workerId === workerFilter)
+      .filter(a => !customerFilter || state.projectCustomerLinks[a.projectId] === customerFilter)
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
+
+    const totalCost = rows.reduce((s, a) => s + a.totalDue, 0);
+    const periodLabel = (from || to) ? ` (${from ? fmtDate(from) : '—'} إلى ${to ? fmtDate(to) : '—'})` : '';
+
+    return {
+      title: `وصف الشغل${periodLabel}`,
+      sections: [
+        { heading: `عدد الأيام: ${rows.length} | إجمالي التكلفة: ${fmt(totalCost)}`, columns: [], rows: [] },
+        {
+          heading: null,
+          columns: ['التاريخ', 'العامل', 'المشروع', 'العميل', 'الوصف', 'التكلفة'],
+          rows: rows.map(a => {
+            const w = state.workers.find(x => x.id === a.workerId);
+            const customerName = state.projectCustomerLinks[a.projectId] || '—';
+            return [fmtDate(a.date), w ? w.name : '—', a.projectId, customerName, a.description, a.totalDue];
+          })
+        }
+      ]
     };
   },
   'labor-report-page': () => {
