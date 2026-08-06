@@ -1623,7 +1623,7 @@
               <input type="date" id="ld-monthly-payment-date">
             </div>
             <div class="field">
-              <label>مبلغ السداد</label>
+              <label>مبلغ السداد (يمكن سداد جزء من المستحق)</label>
               <input type="number" id="ld-monthly-payment-amount" min="0" step="0.01">
             </div>
             <div class="field">
@@ -1634,6 +1634,7 @@
               </div>
             </div>
           </div>
+          <div id="ld-monthly-payment-preview-note" style="display:none;font-size:12.5px;background:var(--surface-2);border-radius:8px;padding:10px 12px;margin-bottom:14px"></div>
           <div style="display:flex;justify-content:flex-end;gap:8px">
             <button class="btn" id="ld-monthly-settlement-cancel">إلغاء</button>
             <button class="btn btn-primary" id="ld-monthly-settlement-submit">تنفيذ سداد الراتب</button>
@@ -6321,36 +6322,43 @@ function isMonthManuallyClosed(workerId, month) {
 }
 
 /* حساب مستحقات شهر معين لموظف شهري: المرتب الأساسي (لو الشهر خلص فعليًا أو اتقفل يدويًا، ولسه ما اتسددش) + إجمالي البدلات/الإضافي المسجلة في الشهر */
+/* إجمالي المسدد فعليًا لشهر معين لموظف شهري (مجموع كل حركات monthlySettlement لنفس الشهر) */
+function monthlyPaidAmount(workerId, month) {
+  let paid = 0;
+  state.transactions.forEach(t => {
+    if (t.monthlySettlement && t.monthlySettlement.workerId === workerId && t.monthlySettlement.month === month) paid += t.amount;
+  });
+  return paid;
+}
+
 function computeMonthlyDues(workerId, month) {
   const w = state.workers.find(w => w.id === workerId);
-  if (!w) return { baseSalary: 0, extras: 0, total: 0, isPaid: false };
-  const paidMonths = paidMonthsForWorker(workerId);
-  const isPaid = paidMonths.has(month);
+  if (!w) return { baseSalary: 0, extras: 0, total: 0, paid: 0, isPaid: false, monthReady: false };
   const monthRecords = workerAttendanceRecords(workerId).filter(a => a.date.startsWith(month));
   const extras = monthRecords.reduce((s, a) => s + a.totalDue, 0); // totalDue هنا بيبقى بس الإضافي+البدلات للموظف الشهري
   const monthReady = isMonthEnded(month) || isMonthManuallyClosed(workerId, month);
-  const baseSalary = (isPaid || !monthReady) ? 0 : w.monthlySalary;
-  return { baseSalary, extras, total: baseSalary + extras, isPaid, monthReady, daysRecorded: monthRecords.length };
+  const baseSalary = monthReady ? w.monthlySalary : 0;
+  const total = baseSalary + extras;
+  const paid = monthlyPaidAmount(workerId, month);
+  const isPaid = total > 0 && paid >= total - 0.005; // مسدد بالكامل فعليًا (مبني على المبلغ الفعلي مش وجود حركة)
+  return { baseSalary, extras, total, paid, isPaid, monthReady, daysRecorded: monthRecords.length };
 }
 
 function computeWorkerDues(workerId) {
   const w = state.workers.find(w => w.id === workerId);
   if (w && w.employmentType === 'شهري') {
-    // للموظف الشهري: المستحق المفتوح = مجموع كل الشهور اللي فيها نشاط ولسه ما اتسددتش (المرتب + البدلات)، ناقص السلف/الخصومات
+    // للموظف الشهري: المستحق المفتوح = مجموع (كل شهر - المسدد منه فعليًا) لكل الشهور اللي فيها نشاط
     const months = activityMonthsForWorker(workerId);
     let totalDue = 0, totalPaid = 0;
     months.forEach(m => {
       const md = computeMonthlyDues(workerId, m);
-      totalDue += md.isPaid ? 0 : md.total; // الشهور المسددة مش بتتحسب كمستحق مفتوح
-    });
-    // إجمالي المسدد فعليًا (تاريخيًا) من كل معاملات الرواتب الشهرية
-    state.transactions.forEach(t => {
-      if (t.monthlySettlement && t.monthlySettlement.workerId === workerId) totalPaid += t.amount;
+      totalDue += md.total; // إجمالي مستحق الشهر (بغض النظر هل اتسدد أو لأ)
+      totalPaid += md.paid; // المسدد فعليًا من الشهر ده (بيدعم الدفعات الجزئية)
     });
     const adv = workerAdvancesDeductions(workerId);
-    const balanceDue = Math.max(0, totalDue - adv.total);
+    const balanceDue = Math.max(0, totalDue - totalPaid - adv.total);
     const daysWorked = workerAttendanceRecords(workerId).filter(a => a.status === 'حاضر').length;
-    return { daysWorked, totalDue: totalDue + totalPaid, totalPaid, advancesDeductions: adv.total, balanceDue, employmentType: 'شهري' };
+    return { daysWorked, totalDue, totalPaid, advancesDeductions: adv.total, balanceDue, employmentType: 'شهري' };
   }
 
   const records = workerAttendanceRecords(workerId);
@@ -7322,16 +7330,9 @@ function computeWorkerDuesForMonth(workerId, month) {
 
   if (w.employmentType === 'شهري') {
     const md = computeMonthlyDues(workerId, month);
-    let totalPaid = 0;
-    state.transactions.forEach(t => {
-      if (t.monthlySettlement && t.monthlySettlement.workerId === workerId && t.monthlySettlement.month === month) totalPaid += t.amount;
-    });
     const daysWorked = monthRecords.filter(a => a.status === 'حاضر').length;
-    // إجمالي المستحق لهذا الشهر تحديدًا = المسدد فعليًا (لو اتسدد) + المتبقي غير المسدد (لو لسه مستحق)
-    // بنفس منطق computeWorkerDues بالظبط، عشان مجموع الشهور المنفصلة يطابق دايمًا إجمالي كل الشهور مع بعض
-    const fullExpectedTotal = totalPaid + (md.isPaid ? 0 : md.total);
-    const balanceDue = Math.max(0, md.total - totalPaid);
-    return { daysWorked, totalDue: fullExpectedTotal, totalPaid, balanceDue, monthReady: md.monthReady };
+    const balanceDue = Math.max(0, md.total - md.paid);
+    return { daysWorked, totalDue: md.total, totalPaid: md.paid, balanceDue, monthReady: md.monthReady };
   }
 
   const totalDue = monthRecords.reduce((s, r) => s + r.totalDue, 0);
@@ -7512,6 +7513,8 @@ function renderLaborDuesPage() {
 }
 
 function openLaborSettlement(workerId) {
+  document.getElementById('ld-monthly-settlement-section').style.display = 'none';
+  currentMonthlySettlementWorkerId = null;
   currentSettlementWorkerId = workerId;
   ldTreasury = 'بنك';
   document.getElementById('ld-treasury-bank-btn').classList.add('selected');
@@ -7910,6 +7913,8 @@ function formatArabicMonthYear(yyyymm) {
 }
 
 function openMonthlySettlement(workerId) {
+  document.getElementById('ld-settlement-section').style.display = 'none';
+  currentSettlementWorkerId = null;
   currentMonthlySettlementWorkerId = workerId;
   ldMonthlyTreasury = 'بنك';
   document.getElementById('ld-monthly-treasury-bank-btn').classList.add('selected');
@@ -7956,10 +7961,10 @@ function renderMonthlySettlementStats() {
 
   const w = state.workers.find(w => w.id === currentMonthlySettlementWorkerId);
   const md = computeMonthlyDues(currentMonthlySettlementWorkerId, month);
-  const monthAdvDeds = monthlyAdvancesDeductionsDetail(currentMonthlySettlementWorkerId, month);
-  const advTotal = monthAdvDeds.filter(a => a.type === 'سلفة').reduce((s, a) => s + a.amount, 0);
-  const dedTotal = monthAdvDeds.filter(a => a.type === 'خصم').reduce((s, a) => s + a.amount, 0);
-  const netDue = Math.max(0, md.total - advTotal - dedTotal);
+  const monthAdvDeds = monthlyAdvancesDeductionsDetail(currentMonthlySettlementWorkerId, month); // للعرض التفصيلي فقط (خصومات/سلف حصلت في نفس الشهر)
+  const openAdvTotal = openAdvancesForWorker(currentMonthlySettlementWorkerId).reduce((s, a) => s + a.amount, 0);
+  const remainingSalary = Math.max(0, md.total - md.paid);
+  const maxAllowed = remainingSalary + openAdvTotal;
 
   const closeStatusEl = document.getElementById('ld-monthly-close-status');
   if (md.monthReady) {
@@ -7983,25 +7988,29 @@ function renderMonthlySettlementStats() {
 
   statsEl.innerHTML = `
     <div class="stat-card">
-      <p class="stat-label">المرتب الأساسي المتفق عليه</p>
-      <p class="stat-value small">${fmt(md.baseSalary)}</p>
+      <p class="stat-label">إجمالي مستحق الشهر</p>
+      <p class="stat-value small">${fmt(md.total)}</p>
+      <p style="font-size:11px;color:var(--ink-mute);margin:4px 0 0">${fmt(md.baseSalary)} (المرتب) + ${fmt(md.extras)} (بدلات/إضافي)</p>
     </div>
     <div class="stat-card">
-      <p class="stat-label">إجمالي بدلات + إضافي الشهر</p>
-      <p class="stat-value small" style="color:var(--success)">+${fmt(md.extras)}</p>
+      <p class="stat-label">مسدد حتى الآن</p>
+      <p class="stat-value small" style="color:var(--success)">${fmt(md.paid)}</p>
     </div>
     <div class="stat-card">
-      <p class="stat-label">إجمالي السلف والخصومات</p>
-      <p class="stat-value small" style="color:var(--danger)">−${fmt(advTotal + dedTotal)}</p>
+      <p class="stat-label">الحد الأقصى لهذه الدفعة</p>
+      <p class="stat-value small" style="color:var(--danger)">${fmt(maxAllowed)}</p>
     </div>
   `;
-  statsEl.insertAdjacentHTML('afterend', `
-    <div class="stat-card" style="margin-bottom:16px;border:1.5px solid var(--accent)">
-      <p class="stat-label">💰 صافي الراتب المستحق نهاية الشهر</p>
-      <p class="stat-value" style="color:var(--accent)">${fmt(netDue)}</p>
-      <p style="font-size:11px;color:var(--ink-mute);margin:4px 0 0">${fmt(md.baseSalary)} (المرتب) + ${fmt(md.extras)} (بدلات/إضافي) − ${fmt(advTotal + dedTotal)} (سلف/خصومات)</p>
-    </div>
-  `);
+
+  const existingBanner = document.getElementById('ld-monthly-open-advance-banner');
+  if (existingBanner) existingBanner.remove();
+  if (openAdvTotal > 0.005) {
+    const banner = document.createElement('div');
+    banner.id = 'ld-monthly-open-advance-banner';
+    banner.style.cssText = 'background:var(--danger-bg);border-radius:8px;padding:10px 12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--danger)';
+    banner.innerHTML = `<span>⚠️ سلفة مفتوحة</span><span style="font-weight:700">${fmt(openAdvTotal)}</span>`;
+    statsEl.insertAdjacentElement('afterend', banner);
+  }
 
   // تفصيل البدلات والإضافي حسب يوم الحضور
   const monthRecords = workerAttendanceRecords(currentMonthlySettlementWorkerId).filter(a => a.date.startsWith(month) && (a.overtimeHours > 0 || a.allowance > 0));
@@ -8051,8 +8060,27 @@ function renderMonthlySettlementStats() {
     });
   }
 
-  document.getElementById('ld-monthly-payment-amount').value = netDue > 0 ? netDue.toFixed(2) : '';
+  document.getElementById('ld-monthly-payment-amount').value = '';
+  updateLdMonthlyPaymentPreview();
 }
+
+function updateLdMonthlyPaymentPreview() {
+  const noteEl = document.getElementById('ld-monthly-payment-preview-note');
+  const amountPaid = parseFloat(document.getElementById('ld-monthly-payment-amount').value) || 0;
+  const openAdvTotal = openAdvancesForWorker(currentMonthlySettlementWorkerId).reduce((s, a) => s + a.amount, 0);
+
+  if (amountPaid <= 0 || openAdvTotal <= 0.005) {
+    noteEl.style.display = 'none';
+    return;
+  }
+
+  const toAdvance = Math.min(amountPaid, openAdvTotal);
+  const toSalary = Math.max(0, amountPaid - toAdvance);
+  noteEl.style.display = 'block';
+  noteEl.innerHTML = `من الدفعة، <b>${fmt(toAdvance)}</b> يقفل السلفة المفتوحة، والباقي <b>${fmt(toSalary)}</b> يُطبَّق على المرتب`;
+}
+
+document.getElementById('ld-monthly-payment-amount').addEventListener('input', updateLdMonthlyPaymentPreview);
 
 document.getElementById('ld-monthly-month-select').addEventListener('change', renderMonthlySettlementStats);
 
@@ -8078,84 +8106,126 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
 
   const w = state.workers.find(w => w.id === currentMonthlySettlementWorkerId);
   const md = computeMonthlyDues(w.id, month);
-  const monthAdvDeds = monthlyAdvancesDeductionsDetail(w.id, month);
-  const advDedTotal = monthAdvDeds.reduce((s, a) => s + a.amount, 0);
-  const netDue = Math.max(0, md.total - advDedTotal);
+  const remainingSalary = Math.max(0, md.total - md.paid); // المتبقي من المرتب لهذا الشهر بعد أي دفعات سابقة
+  const openAdvTotal = openAdvancesForWorker(w.id).reduce((s, a) => s + a.amount, 0);
+  const maxAllowed = remainingSalary + openAdvTotal;
 
   const amountPaid = parseFloat(document.getElementById('ld-monthly-payment-amount').value) || 0;
   const paymentDate = document.getElementById('ld-monthly-payment-date').value;
   if (!paymentDate) { showToast('من فضلك اختر تاريخ السداد', true); return; }
   if (amountPaid <= 0) { showToast('من فضلك أدخل مبلغ سداد أكبر من صفر', true); return; }
-  if (amountPaid > netDue + 0.005) { showToast(`المبلغ أكبر من صافي المستحق (${fmt(netDue)})`, true); return; }
+  if (amountPaid > maxAllowed + 0.005) {
+    showToast(`المبلغ أكبر من إجمالي المستحق (${fmt(maxAllowed)}${openAdvTotal > 0.005 ? ` شامل سلفة مفتوحة ${fmt(openAdvTotal)}` : ''})`, true);
+    return;
+  }
 
-  // نحدد نصيب كل مشروع من الشهر بناءً على نسبة أيام الحضور الفعلية فيه، ونوزّع المبلغ المسدد بنفس النسبة
-  const monthRecords = workerAttendanceRecords(w.id).filter(a => a.date.startsWith(month));
-  const projectDayCounts = {};
-  monthRecords.forEach(a => { projectDayCounts[a.projectId] = (projectDayCounts[a.projectId] || 0) + 1; });
-  const totalDaysInMonth = Object.values(projectDayCounts).reduce((s, c) => s + c, 0);
+  // الخطوة 1: نقفل أي سلف مفتوحة أولًا (الأقدم فالأقدم) — بنفس منطق السداد اليومي بالظبط
+  const openAdvances = openAdvancesForWorker(w.id);
+  let remainingToApply = amountPaid;
+  let advancesClosedTotal = 0;
+  const closedAdvanceIds = [];
+  for (const adv of openAdvances) {
+    if (remainingToApply <= 0.005) break;
+    const closeAmount = Math.min(adv.amount, remainingToApply);
+    if (closeAmount <= 0.005) continue;
+    advancesClosedTotal += closeAmount;
+    closedAdvanceIds.push({ id: adv.id, closeAmount, fullyClosed: closeAmount >= adv.amount - 0.005 });
+    remainingToApply -= closeAmount;
+  }
+  const salaryPortion = remainingToApply; // الباقي بعد قفل السلف يُطبَّق على المرتب
 
   const monthLabel = formatArabicMonthYear(month);
   const createdTxnIds = [];
 
-  if (totalDaysInMonth === 0) {
-    // مفيش أي حضور مسجل في الشهر ده خالص — نسجل الراتب كحركة واحدة عامة (مفيش أساس نوزّع عليه)
-    const desc = `راتب الموظف ${w.name} لشهر ${monthLabel} بعد الخصومات والإضافات`;
-    const txn = {
+  // قيد إغلاق السلفة (لو فيه سلف اتقفلت)، بتاريخ السداد نفسه — بنفس أسلوب السداد اليومي
+  if (advancesClosedTotal > 0.005) {
+    const closingTxn = {
       id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
       seq: state.nextTxnNo,
       date: paymentDate,
-      kind: 'مصروف',
-      account: LABOR_EXPENSE_ACCOUNT,
+      kind: 'إيراد',
+      account: 'سلف عمالة',
       project: 'عام / غير محدد',
       customer: 'عام / غير محدد',
-      desc,
-      amount: amountPaid,
+      desc: `إغلاق سلفة موظف — ${w.name}`,
+      amount: advancesClosedTotal,
       treasury: ldMonthlyTreasury,
-      notes: `المرتب الأساسي: ${fmt(md.baseSalary)} | بدلات وإضافي: ${fmt(md.extras)} | سلف/خصومات مطبقة: ${fmt(advDedTotal)}`,
-      monthlySettlement: { workerId: w.id, month }
+      notes: `تم قفل سلفة بقيمة ${fmt(advancesClosedTotal)} ضمن تسوية راتب شهر ${monthLabel}`,
+      isInternalClearing: true,
+      laborAdvanceClosing: { workerId: w.id, closedAdvanceIds: closedAdvanceIds.map(c => c.id) }
     };
-    state.transactions.push(txn);
-    createdTxnIds.push(txn.id);
+    state.transactions.push(closingTxn);
     state.nextTxnNo += 1;
-  } else {
-    // توزيع المبلغ على كل مشروع بنسبة أيامه الفعلية من إجمالي أيام الشهر
-    Object.entries(projectDayCounts).forEach(([projectName, dayCount]) => {
-      const shareRatio = dayCount / totalDaysInMonth;
-      const projectAmount = amountPaid * shareRatio;
-      const relatedTxn = state.transactions.find(t => t.project === projectName && t.customer);
-      const projectCustomer = relatedTxn ? relatedTxn.customer : 'عام / غير محدد';
-      const desc = `راتب الموظف ${w.name} لشهر ${monthLabel} — نصيب مشروع ${projectName} (${dayCount} من ${totalDaysInMonth} يوم)`;
+    closedAdvanceIds.forEach(c => {
+      const advRecord = state.advancesDeductions.find(a => a.id === c.id);
+      if (advRecord && c.fullyClosed) advRecord.settled = true;
+    });
+  }
 
+  if (salaryPortion > 0.005) {
+    // نحدد نصيب كل مشروع من الشهر بناءً على نسبة أيام الحضور الفعلية فيه، ونوزّع الجزء المخصص للمرتب بنفس النسبة
+    const monthRecords = workerAttendanceRecords(w.id).filter(a => a.date.startsWith(month));
+    const projectDayCounts = {};
+    monthRecords.forEach(a => { projectDayCounts[a.projectId] = (projectDayCounts[a.projectId] || 0) + 1; });
+    const totalDaysInMonth = Object.values(projectDayCounts).reduce((s, c) => s + c, 0);
+
+    if (totalDaysInMonth === 0) {
+      // مفيش أي حضور مسجل في الشهر ده خالص — نسجل الراتب كحركة واحدة عامة (مفيش أساس نوزّع عليه)
+      const desc = `راتب الموظف ${w.name} لشهر ${monthLabel}`;
       const txn = {
         id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
         seq: state.nextTxnNo,
         date: paymentDate,
         kind: 'مصروف',
         account: LABOR_EXPENSE_ACCOUNT,
-        project: projectName,
-        customer: projectCustomer,
+        project: 'عام / غير محدد',
+        customer: 'عام / غير محدد',
         desc,
-        amount: projectAmount,
+        amount: salaryPortion,
         treasury: ldMonthlyTreasury,
-        notes: `نسبة الأيام: ${dayCount}/${totalDaysInMonth} — المرتب الأساسي الكامل: ${fmt(md.baseSalary)} | بدلات وإضافي: ${fmt(md.extras)} | سلف/خصومات: ${fmt(advDedTotal)}`,
+        notes: `دفعة من راتب شهر ${monthLabel} — إجمالي الشهر: ${fmt(md.total)} | مسدد سابقًا: ${fmt(md.paid)}`,
         monthlySettlement: { workerId: w.id, month }
       };
       if (ldMonthlyTreasury === 'بنك') txn.bankAccountId = document.getElementById('ld-monthly-bank-account')?.value || 'default-bank';
       state.transactions.push(txn);
       createdTxnIds.push(txn.id);
       state.nextTxnNo += 1;
-    });
+    } else {
+      // توزيع الجزء المخصص للمرتب على كل مشروع بنسبة أيامه الفعلية من إجمالي أيام الشهر
+      Object.entries(projectDayCounts).forEach(([projectName, dayCount]) => {
+        const shareRatio = dayCount / totalDaysInMonth;
+        const projectAmount = salaryPortion * shareRatio;
+        const relatedTxn = state.transactions.find(t => t.project === projectName && t.customer);
+        const projectCustomer = relatedTxn ? relatedTxn.customer : 'عام / غير محدد';
+        const desc = `راتب الموظف ${w.name} لشهر ${monthLabel} — نصيب مشروع ${projectName} (${dayCount} من ${totalDaysInMonth} يوم)`;
+
+        const txn = {
+          id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
+          seq: state.nextTxnNo,
+          date: paymentDate,
+          kind: 'مصروف',
+          account: LABOR_EXPENSE_ACCOUNT,
+          project: projectName,
+          customer: projectCustomer,
+          desc,
+          amount: projectAmount,
+          treasury: ldMonthlyTreasury,
+          notes: `نسبة الأيام: ${dayCount}/${totalDaysInMonth} — دفعة من راتب شهر ${monthLabel} (إجمالي الشهر: ${fmt(md.total)}، مسدد سابقًا: ${fmt(md.paid)})`,
+          monthlySettlement: { workerId: w.id, month }
+        };
+        if (ldMonthlyTreasury === 'بنك') txn.bankAccountId = document.getElementById('ld-monthly-bank-account')?.value || 'default-bank';
+        state.transactions.push(txn);
+        createdTxnIds.push(txn.id);
+        state.nextTxnNo += 1;
+      });
+    }
   }
   renumberAllTransactionsByDate();
 
-  // نعلّم السلف/الخصومات المطبقة في التسوية دي عشان ما تتخصمش تاني في شهر جاي
-  monthAdvDeds.forEach(a => { a.consumedInMonth = month; });
-
-  const projectsCount = Object.keys(projectDayCounts).length || 1;
-  logAuditEvent('سداد راتب شهري', `${w.name}: ${fmt(amountPaid)} ج.م لشهر ${monthLabel} من ${ldMonthlyTreasury} — موزّع على ${projectsCount} مشروع حسب نسبة الأيام`);
+  logAuditEvent('سداد راتب شهري', `${w.name}: ${fmt(amountPaid)} ج.م لشهر ${monthLabel} من ${ldMonthlyTreasury}${advancesClosedTotal > 0.005 ? ` — منها ${fmt(advancesClosedTotal)} لقفل سلفة` : ''}`);
   saveState();
 
-  showToast(`تم سداد راتب ${w.name} لشهر ${monthLabel} بنجاح — موزّع على ${projectsCount} مشروع`);
+  showToast(`تم سداد ${fmt(amountPaid)} ج.م لـ ${w.name} — راتب شهر ${monthLabel}`);
   document.getElementById('ld-monthly-settlement-section').style.display = 'none';
   currentMonthlySettlementWorkerId = null;
   renderLaborDuesPage();
@@ -8481,18 +8551,53 @@ function renderWorkerDetail() {
   if (!w) return;
 
   const isMonthly = w.employmentType === 'شهري';
-  const dues = computeWorkerDues(w.id);
+  const records = workerAttendanceRecords(w.id);
+
+  // سجل الحضور التفصيلي — مع فلتر بالشهر (نقرأ الفلتر بدري عشان نطبقه كمان على البطاقات فوق)
+  const monthSel = document.getElementById('wd-filter-month');
+  const currentMonthVal = monthSel.value;
+  const workerMonths = [...new Set(records.map(r => r.date.slice(0, 7)))].sort((a, b) => b.localeCompare(a));
+  monthSel.innerHTML = '<option value="">كل الشهور</option>';
+  workerMonths.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = formatArabicMonthYear(m);
+    monthSel.appendChild(opt);
+  });
+  monthSel.value = currentMonthVal;
+  const wdMonthFilter = monthSel.value;
+
   document.getElementById('wd-worker-name').textContent = w.name;
   document.getElementById('wd-worker-sub').textContent = isMonthly
     ? `${w.role || '—'} · كود ${w.code} · مرتب شهري ${fmt(w.monthlySalary)} ج.م`
     : `${w.role || '—'} · كود ${w.code} · يومية ${fmt(w.dailyRate)} ج.م`;
-  document.getElementById('wd-days').textContent = dues.daysWorked;
-  document.getElementById('wd-total-due').textContent = fmt(dues.totalDue);
-  document.getElementById('wd-balance').textContent = fmt(dues.balanceDue);
-  document.getElementById('wd-balance').style.color = dues.balanceDue > 0.005 ? 'var(--danger)' : 'var(--success)';
+
+  if (wdMonthFilter) {
+    // بطاقات مفلترة بشهر معين
+    const filteredForStats = records.filter(r => r.date.startsWith(wdMonthFilter));
+    if (isMonthly) {
+      const md = computeMonthlyDues(w.id, wdMonthFilter);
+      document.getElementById('wd-days').textContent = filteredForStats.filter(r => r.status === 'حاضر').length;
+      document.getElementById('wd-total-due').textContent = fmt(md.total);
+      document.getElementById('wd-balance').textContent = fmt(Math.max(0, md.total - md.paid));
+      document.getElementById('wd-balance').style.color = (md.total - md.paid) > 0.005 ? 'var(--danger)' : 'var(--success)';
+    } else {
+      const totalDue = filteredForStats.reduce((s, r) => s + r.totalDue, 0);
+      const totalPaid = filteredForStats.reduce((s, r) => s + attendancePaidAmount(r.id), 0);
+      document.getElementById('wd-days').textContent = filteredForStats.length;
+      document.getElementById('wd-total-due').textContent = fmt(totalDue);
+      document.getElementById('wd-balance').textContent = fmt(Math.max(0, totalDue - totalPaid));
+      document.getElementById('wd-balance').style.color = (totalDue - totalPaid) > 0.005 ? 'var(--danger)' : 'var(--success)';
+    }
+  } else {
+    // بطاقات الإجمالي الكامل (بدون فلتر)
+    const dues = computeWorkerDues(w.id);
+    document.getElementById('wd-days').textContent = dues.daysWorked;
+    document.getElementById('wd-total-due').textContent = fmt(dues.totalDue);
+    document.getElementById('wd-balance').textContent = fmt(dues.balanceDue);
+    document.getElementById('wd-balance').style.color = dues.balanceDue > 0.005 ? 'var(--danger)' : 'var(--success)';
+  }
 
   // تجميع أيام العمل حسب المشروع — عشان "اعرف كل عامل خدم المشروع قد ايه بالظبط"
-  const records = workerAttendanceRecords(w.id);
   const byProject = {};
   records.forEach(r => {
     if (!byProject[r.projectId]) byProject[r.projectId] = { days: 0, presentDays: 0, total: 0 };
@@ -8519,19 +8624,6 @@ function renderWorkerDetail() {
     });
   }
 
-  // سجل الحضور التفصيلي — مع فلتر بالشهر
-  const monthSel = document.getElementById('wd-filter-month');
-  const currentMonthVal = monthSel.value;
-  const workerMonths = [...new Set(records.map(r => r.date.slice(0, 7)))].sort((a, b) => b.localeCompare(a));
-  monthSel.innerHTML = '<option value="">كل الشهور</option>';
-  workerMonths.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m; opt.textContent = formatArabicMonthYear(m);
-    monthSel.appendChild(opt);
-  });
-  monthSel.value = currentMonthVal;
-
-  const wdMonthFilter = monthSel.value;
   const filteredRecords = records.filter(r => !wdMonthFilter || r.date.startsWith(wdMonthFilter));
 
   const tbody = document.getElementById('wd-attendance-body');
