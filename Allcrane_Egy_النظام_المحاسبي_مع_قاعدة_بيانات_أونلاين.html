@@ -11312,12 +11312,26 @@ document.getElementById('partnership-history-close-btn').addEventListener('click
 });
 
 /* =====================================================================
-   تسجيل Service Worker (PWA)
+   تسجيل Service Worker (PWA) — مع تحديث تلقائي فوري عند وجود نسخة جديدة
    ===================================================================== */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch((err) => {
+    navigator.serviceWorker.register('./sw.js').then((registration) => {
+      // نفحص وجود تحديث جديد كل 30 دقيقة لو التطبيق فاضل مفتوح فترة طويلة
+      setInterval(() => { registration.update(); }, 30 * 60 * 1000);
+    }).catch((err) => {
       console.error('Service worker registration failed:', err);
+    });
+
+    // لما الـ Service Worker الجديد ياخد التحكم فعليًا، بيبعتلنا رسالة SW_UPDATED
+    // فنعمل Reload تلقائي فورًا عشان نضمن إن الكود اللي شغال في المتصفح دايمًا هو آخر نسخة
+    let reloadedOnce = false;
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'SW_UPDATED' && !reloadedOnce) {
+        reloadedOnce = true;
+        showToast('تم تحديث النظام لآخر نسخة — جاري إعادة التحميل...');
+        setTimeout(() => { location.reload(); }, 1000);
+      }
     });
   });
 }
