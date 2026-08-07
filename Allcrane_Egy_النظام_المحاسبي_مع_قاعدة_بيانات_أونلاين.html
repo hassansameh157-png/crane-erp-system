@@ -7579,12 +7579,6 @@ function renderLaborSettlementStats() {
   }
 }
 
-function updateLdPaymentPreview() {
-  document.getElementById('ld-payment-preview-note').style.display = 'none';
-}
-
-document.getElementById('ld-payment-amount').addEventListener('input', updateLdPaymentPreview);
-
 let ldSelectedAdvanceAmount = 0; // كام من رصيد السلف المتاح المستخدم قررت يستخدمه في الدفعة دي
 
 function renderLdAdvanceBalance() {
