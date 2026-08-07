@@ -2932,6 +2932,7 @@ function migrateState(s) {
   if (!s.attendance) s.attendance = [];
   if (!s.nextWorkerNo) s.nextWorkerNo = (s.workers.length || 0) + 1;
   if (!s.advancesDeductions) s.advancesDeductions = [];
+  if (!s.partialMonthlyPayments) s.partialMonthlyPayments = [];
   if (!s.forecasts) s.forecasts = [];
   if (!s.payables) s.payables = [];
   if (!s.dashboardCustomCards) s.dashboardCustomCards = [];
@@ -4329,6 +4330,24 @@ function renderTxnsPage() {
 
 let selectedTxnIds = new Set();
 
+/* لو الحركة اللي بتتمسح كانت مستخدمة فيها رصيد سلفة (كامل أو جزء)، نرجّع المبلغ ده لرصيد السلفة تلقائيًا
+   عشان السلفة ترجع "لم يتم التسوية" لو كانت "تم التسوية" بسبب القيد اللي دلوقتي بيتمسح */
+function restoreAdvanceBalanceOnDelete(txn) {
+  if (!txn.laborSettlement || !txn.laborSettlement.advanceUsage || txn.laborSettlement.advanceUsage.length === 0) return;
+  let restoredCount = 0;
+  txn.laborSettlement.advanceUsage.forEach(u => {
+    const adv = state.advancesDeductions.find(a => a.id === u.advId);
+    if (adv) {
+      const currentRemaining = adv.amountRemaining !== undefined ? adv.amountRemaining : 0;
+      adv.amountRemaining = currentRemaining + u.amount;
+      restoredCount++;
+    }
+  });
+  if (restoredCount > 0) {
+    logAuditEvent('استرجاع رصيد سلفة', `تم إرجاع رصيد سلفة بعد حذف حركة مرتبطة بها — ${txn.desc}`);
+  }
+}
+
 function renderTxnsTable() {
   const rows = getFilteredTxns();
   document.getElementById('txns-count-label').textContent = `${rows.length} حركة من إجمالي ${state.transactions.length}`;
@@ -4461,6 +4480,7 @@ function renderTxnsTable() {
     delBtn.addEventListener('click', () => {
       if (!confirm(`هل تريد حذف هذه الحركة؟\n"${t.desc}" — ${fmt(t.amount)} ج.م`)) return;
       logAuditEvent('حذف حركة', `${t.kind} — ${t.desc} — ${fmt(t.amount)} ج.م (${fmtDate(t.date)})`);
+      restoreAdvanceBalanceOnDelete(t);
       state.transactions = state.transactions.filter(x => x.id !== t.id);
       selectedTxnIds.delete(t.id);
       saveState();
@@ -4509,6 +4529,7 @@ document.getElementById('txns-bulk-delete-btn').addEventListener('click', () => 
   if (!confirm(`هل تريد حذف ${count} حركة محددة بإجمالي ${fmt(totalAmount)} ج.م؟\n\n⚠️ هذا الإجراء لا يمكن التراجع عنه.`)) return;
 
   const deletedTxns = state.transactions.filter(t => selectedTxnIds.has(t.id));
+  deletedTxns.forEach(t => restoreAdvanceBalanceOnDelete(t));
   state.transactions = state.transactions.filter(t => !selectedTxnIds.has(t.id));
   logAuditEvent('حذف جماعي لحركات', `تم حذف ${count} حركة بإجمالي ${fmt(totalAmount)} ج.م: ${deletedTxns.slice(0, 5).map(t => t.desc).join('، ')}${deletedTxns.length > 5 ? ' وغيرها' : ''}`);
   selectedTxnIds.clear();
@@ -6306,6 +6327,12 @@ function paidMonthsForWorker(workerId) {
 function activityMonthsForWorker(workerId) {
   const months = new Set();
   workerAttendanceRecords(workerId).forEach(a => months.add(a.date.slice(0, 7)));
+  // كمان نضيف الشهر الحالي لو الموظف عنده سلف/خصومات مفتوحة بدون أي حضور مسجل بعد،
+  // عشان يقدر يسدد راتبه الأساسي (لو الشهر خلص) حتى لو مفيش أيام حضور مسجلة
+  const openItems = openAdvancesDeductionsForWorker(workerId);
+  if (openItems.length > 0) {
+    months.add(new Date().toISOString().slice(0, 7));
+  }
   return [...months].sort();
 }
 
@@ -6326,6 +6353,10 @@ function monthlyPaidAmount(workerId, month) {
   let paid = 0;
   state.transactions.forEach(t => {
     if (t.monthlySettlement && t.monthlySettlement.workerId === workerId && t.monthlySettlement.month === month) paid += t.amount;
+  });
+  // الدفعات الجزئية (اللي لسه معملهاش قيد محاسبي، لحد ما الشهر يتقفل بالكامل) بتتحسب كمان في "المسدد"
+  (state.partialMonthlyPayments || []).forEach(p => {
+    if (p.workerId === workerId && p.month === month) paid += p.amount;
   });
   return paid;
 }
@@ -7596,6 +7627,7 @@ function renderLdAdvanceBalance() {
 
   if (openAdv.length === 0) {
     section.style.display = 'none';
+    listEl.innerHTML = ''; // نتأكد من مسح أي حقول إدخال قديمة فضلت في الـ DOM
     ldSelectedAdvanceAmount = 0;
     return;
   }
@@ -7633,11 +7665,41 @@ function renderLdAdvanceBalance() {
     const useBtn = document.createElement('button');
     useBtn.className = 'btn btn-sm';
     useBtn.textContent = 'استخدام الكل';
-    useBtn.addEventListener('click', () => { input.value = remaining; recalcLdSelectedAdvance(); });
+    useBtn.title = 'يوزّع هذا المبلغ تلقائيًا على أقدم أيام العمل غير المسددة';
+    useBtn.addEventListener('click', () => {
+      input.value = remaining;
+      recalcLdSelectedAdvance();
+      applyAdvanceAmountToUnpaidDays(remaining);
+    });
     fullBtn.appendChild(useBtn);
 
     listEl.appendChild(row);
   });
+}
+
+/* بيوزّع مبلغ معين (من رصيد سلفة) تلقائيًا على أقدم أيام العمل غير المسددة (FIFO)،
+   ويملأ خانات اليوم نفسها بالمبلغ — عشان السلفة تكون مرتبطة فعليًا بأيام حقيقية، مش رقم منفصل بمعزل عنها */
+function applyAdvanceAmountToUnpaidDays(amountToDistribute) {
+  const unpaid = unpaidAttendanceForWorker(currentSettlementWorkerId);
+  let remainingToApply = amountToDistribute;
+
+  for (const a of unpaid) {
+    if (remainingToApply <= 0.005) break;
+    const alreadyEntered = ldSelectedPayments[a.id] || 0;
+    const dayRemaining = (a.totalDue - a.paid) - alreadyEntered;
+    if (dayRemaining <= 0.005) continue; // اليوم ده اتغطى بالكامل بالفعل من إدخال يدوي سابق
+
+    const applyAmount = Math.min(dayRemaining, remainingToApply);
+    const newDayValue = alreadyEntered + applyAmount;
+    ldSelectedPayments[a.id] = newDayValue;
+    remainingToApply -= applyAmount;
+
+    // نحدّث خانة الإدخال الفعلية في الشاشة عشان تعكس القيمة الجديدة
+    const dayInputEl = document.querySelector(`#ld-settlement-rows input[data-attendance-id="${a.id}"]`);
+    if (dayInputEl) dayInputEl.value = newDayValue;
+  }
+
+  updateLdTotalDisplay();
 }
 
 function recalcLdSelectedAdvance() {
@@ -7730,6 +7792,7 @@ function renderLaborSettlementRows() {
       amountInput.placeholder = '0.00';
       amountInput.style.width = '100%';
       amountInput.style.fontSize = '12px';
+      amountInput.dataset.attendanceId = a.id;
       amountInput.addEventListener('input', () => {
         let val = parseFloat(amountInput.value) || 0;
         if (val > remaining) { val = remaining; amountInput.value = remaining; }
@@ -7770,17 +7833,17 @@ function renderLaborSettlementRows() {
   updateLdTotalDisplay();
 }
 
-/* يحسب إجمالي المبالغ المحددة يدويًا + المستخدم من رصيد السلف، ويحدّث العرض والمعاينة */
+/* يحسب إجمالي مبالغ الأيام المحددة (سواء نقدي أو مُغطاة من رصيد سلف)، ويحدّث العرض والمعاينة */
 function updateLdTotalDisplay() {
   const daysTotal = Object.values(ldSelectedPayments).reduce((s, v) => s + v, 0);
   const advanceUsed = ldSelectedAdvanceAmount || 0;
-  const grandTotal = daysTotal + advanceUsed;
-  document.getElementById('ld-payment-amount-display').value = fmt(grandTotal);
+  document.getElementById('ld-payment-amount-display').value = fmt(daysTotal);
 
   const noteEl = document.getElementById('ld-payment-preview-note');
   if (advanceUsed > 0.005) {
     noteEl.style.display = 'block';
-    noteEl.innerHTML = `مصدر الدفعة: <b>${fmt(advanceUsed)}</b> من رصيد السلفة المتاح، <b>${fmt(daysTotal)}</b> دفعة نقدية عادية`;
+    const cashPortion = Math.max(0, daysTotal - advanceUsed);
+    noteEl.innerHTML = `إجمالي الأيام المحددة: <b>${fmt(daysTotal)}</b> — منها <b>${fmt(advanceUsed)}</b> من رصيد السلفة، و<b>${fmt(cashPortion)}</b> دفعة نقدية`;
   } else {
     noteEl.style.display = 'none';
   }
@@ -7885,9 +7948,15 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
   const dayEntries = Object.entries(ldSelectedPayments).filter(([, amt]) => amt > 0.005);
   const daysTotal = dayEntries.reduce((s, [, amt]) => s + amt, 0);
   const advanceUsed = ldSelectedAdvanceAmount || 0;
+  // ملحوظة مهمة: advanceUsed هنا مش مبلغ إضافي فوق daysTotal — هي بس توضح إن جزء من daysTotal (اللي هو مبلغ الأيام المحددة فعليًا) جاي من رصيد سلفة بدل ما يكون دفعة نقدية.
+  // زرار "استخدام الكل" جنب السلفة بيملأ خانة اليوم نفسها، فمفيش أي مبلغ منفصل يُضاف، عشان نتجنب مضاعفة القيد.
 
   if (!paymentDate) { showToast('من فضلك اختر تاريخ السداد', true); return; }
   if (dayEntries.length === 0) { showToast('من فضلك حدد مبلغ لسداد يوم واحد على الأقل', true); return; }
+  if (advanceUsed > daysTotal + 0.005) {
+    showToast('المبلغ المستخدم من السلفة أكبر من إجمالي الأيام المحددة — استخدم زرار "استخدام الكل" جنب السلفة عشان يملأ خانات الأيام تلقائيًا', true);
+    return;
+  }
 
   // نتحقق إن مجموع المحدد لكل يوم منطقي (مش أكبر من المتبقي الفعلي لأي يوم)
   for (const [attId, amt] of dayEntries) {
@@ -7911,7 +7980,7 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
   }
 
   // نوزّع (الدفعة النقدية + رصيد السلفة المستخدم) على حركة منفصلة لكل مشروع، بنفس تفاصيل الأيام المحددة يدويًا
-  const grandTotal = daysTotal + advanceUsed; // إجمالي الدفعة الأصلية الكاملة، قبل أي توزيع على المشاريع
+  const grandTotal = daysTotal; // إجمالي الدفعة الفعلية = مبلغ الأيام المحددة (السلفة جزء منه، مش إضافة عليه)
   const settlementRef = 'STL-' + Date.now().toString(36).toUpperCase(); // مرجع موحّد يربط كل القيود الناتجة عن نفس عملية السداد دي
   const touchedProjects = {};
   const lines = [];
@@ -7933,6 +8002,13 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
     const projectCustomer = relatedTxn ? relatedTxn.customer : 'عام / غير محدد';
     const desc = buildLaborSettlementDescription(w.name, projectDates, projectLines.length, grandTotal);
 
+    // نحسب نصيب هذا القيد بالتحديد من كل سلفة استُخدمت في الدفعة دي، بنفس نسبة مبلغ القيد من الإجمالي
+    // عشان لو القيد اتمسح لاحقًا، نقدر نرجّع بالظبط نفس المبلغ اللي كان مستخدم منه لكل سلفة
+    const shareOfGrand = grandTotal > 0.005 ? projectAmount / grandTotal : 0;
+    const advanceUsage = Object.entries(advUsageByAdvId).map(([advId, usedAmt]) => ({
+      advId, amount: usedAmt * shareOfGrand
+    })).filter(u => u.amount > 0.005);
+
     const txn = {
       id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
       seq: state.nextTxnNo,
@@ -7953,7 +8029,8 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
         attendanceIds: projectLines.map(l => l.attendanceId),
         lines: projectLines,
         settlementRef,
-        grandTotal
+        grandTotal,
+        advanceUsage
       }
     };
     if (ldTreasury === 'بنك') txn.bankAccountId = document.getElementById('ld-bank-account')?.value || 'default-bank';
@@ -8161,6 +8238,7 @@ function renderLdMonthlyAdvanceBalance() {
 
   if (openAdv.length === 0) {
     section.style.display = 'none';
+    listEl.innerHTML = ''; // نتأكد من مسح أي حقول إدخال قديمة فضلت في الـ DOM، عشان مايتلقطوش بالغلط في querySelectorAll لاحقًا
     ldMonthlySelectedAdvanceAmount = 0;
     return;
   }
@@ -8284,33 +8362,29 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
   const isLastPayment = amountPaid >= remainingNet - 0.005; // هل الدفعة دي بتقفل الشهر بالكامل؟
 
   if (!isLastPayment) {
-    // دفعة جزئية (مش آخر واحدة): نسجلها بمبلغها الصافي بس، من غير ما نرحّل القيد الإجمالي الكامل لسه
-    const txn = {
-      id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
-      seq: state.nextTxnNo,
-      date: paymentDate,
-      kind: 'مصروف',
-      account: LABOR_EXPENSE_ACCOUNT,
-      project: 'عام / غير محدد',
-      customer: 'عام / غير محدد',
-      desc: `دفعة مقدمة من راتب ${w.name} لشهر ${monthLabel}`,
+    // دفعة جزئية (مش آخر واحدة): بنسجلها كـ"مسدد" بس تراكميًا، من غير أي قيد في سجل الحركات خالص —
+    // القيد الوحيد المفروض يظهر هو قيد إغلاق الشهر بالكامل، مرة واحدة، وقت آخر دفعة
+    state.partialMonthlyPayments.push({
+      id: crypto.randomUUID(),
+      workerId: w.id,
+      month,
       amount: amountPaid,
+      date: paymentDate,
       treasury: ldMonthlyTreasury,
-      notes: `دفعة جزئية — المستحق الصافي: ${fmt(md.netDisplayed)} | مسدد حتى الآن (شامل هذه الدفعة): ${fmt(md.paid + amountPaid)}${advanceUsed > 0.005 ? ` | منها ${fmt(advanceUsed)} من رصيد سلفة` : ''}`,
-      monthlySettlement: { workerId: w.id, month }
-    };
-    if (ldMonthlyTreasury === 'بنك') txn.bankAccountId = document.getElementById('ld-monthly-bank-account')?.value || 'default-bank';
-    state.transactions.push(txn);
-    createdTxnIds.push(txn.id);
-    state.nextTxnNo += 1;
+      advanceUsage: Object.entries(advUsageByAdvId).map(([advId, usedAmt]) => ({ advId, amount: usedAmt }))
+    });
   } else {
-    // آخر دفعة تقفل الشهر بالكامل: نلغي أي حركات دفعات جزئية سابقة لنفس الشهر، ونرحّل قيد واحد بإجمالي المرتب الكامل موزّع على المشاريع
-    state.transactions = state.transactions.filter(t => !(t.monthlySettlement && t.monthlySettlement.workerId === w.id && t.monthlySettlement.month === month));
-
+    // آخر دفعة تقفل الشهر بالكامل: نرحّل قيد واحد بإجمالي المرتب الكامل (grossTotal)، موزّع على المشاريع بنسبة أيام الحضور
     const monthRecords = workerAttendanceRecords(w.id).filter(a => a.date.startsWith(month));
     const projectDayCounts = {};
     monthRecords.forEach(a => { projectDayCounts[a.projectId] = (projectDayCounts[a.projectId] || 0) + 1; });
     const totalDaysInMonth = Object.values(projectDayCounts).reduce((s, c) => s + c, 0);
+
+    // كل السلف المستخدمة عبر كل الدفعات الجزئية + الدفعة الأخيرة دي، عشان نربطها كلها بالقيد النهائي
+    const allPartials = state.partialMonthlyPayments.filter(p => p.workerId === w.id && p.month === month);
+    const allAdvanceUsage = {};
+    allPartials.forEach(p => (p.advanceUsage || []).forEach(u => { allAdvanceUsage[u.advId] = (allAdvanceUsage[u.advId] || 0) + u.amount; }));
+    Object.entries(advUsageByAdvId).forEach(([advId, amt]) => { allAdvanceUsage[advId] = (allAdvanceUsage[advId] || 0) + amt; });
 
     if (totalDaysInMonth === 0) {
       const txn = {
@@ -8321,11 +8395,12 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
         account: LABOR_EXPENSE_ACCOUNT,
         project: 'عام / غير محدد',
         customer: 'عام / غير محدد',
-        desc: `راتب الموظف ${w.name} لشهر ${monthLabel} (إجمالي، شامل أي دفعات سابقة)`,
+        desc: `راتب الموظف ${w.name} لشهر ${monthLabel}`,
         amount: md.grossTotal,
         treasury: ldMonthlyTreasury,
-        notes: `إجمالي المرتب: ${fmt(md.grossTotal)} — بعد خصم خصومات ${fmt(md.openAdvDed)} — الصافي المدفوع: ${fmt(md.netDisplayed)}${advanceUsed > 0.005 ? ` (منها ${fmt(advanceUsed)} من رصيد سلفة)` : ''}`,
-        monthlySettlement: { workerId: w.id, month }
+        notes: `إجمالي المرتب: ${fmt(md.grossTotal)} — بعد خصم خصومات ${fmt(md.openAdvDed)} — الصافي المدفوع: ${fmt(md.netDisplayed)}`,
+        monthlySettlement: { workerId: w.id, month },
+        advanceUsage: Object.entries(allAdvanceUsage).map(([advId, amount]) => ({ advId, amount }))
       };
       if (ldMonthlyTreasury === 'بنك') txn.bankAccountId = document.getElementById('ld-monthly-bank-account')?.value || 'default-bank';
       state.transactions.push(txn);
@@ -8339,6 +8414,10 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
         const projectCustomer = relatedTxn ? relatedTxn.customer : 'عام / غير محدد';
         const desc = `راتب الموظف ${w.name} لشهر ${monthLabel} — نصيب مشروع ${projectName} (${dayCount} من ${totalDaysInMonth} يوم)`;
 
+        const advanceUsage = Object.entries(allAdvanceUsage).map(([advId, amount]) => ({
+          advId, amount: amount * shareRatio
+        })).filter(u => u.amount > 0.005);
+
         const txn = {
           id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
           seq: state.nextTxnNo,
@@ -8351,7 +8430,8 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
           amount: projectAmount,
           treasury: ldMonthlyTreasury,
           notes: `نسبة الأيام: ${dayCount}/${totalDaysInMonth} — إجمالي المرتب: ${fmt(md.grossTotal)}، بعد خصم خصومات ${fmt(md.openAdvDed)}`,
-          monthlySettlement: { workerId: w.id, month }
+          monthlySettlement: { workerId: w.id, month },
+          advanceUsage
         };
         if (ldMonthlyTreasury === 'بنك') txn.bankAccountId = document.getElementById('ld-monthly-bank-account')?.value || 'default-bank';
         state.transactions.push(txn);
@@ -8359,6 +8439,9 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
         state.nextTxnNo += 1;
       });
     }
+
+    // نمسح كل الدفعات الجزئية المؤقتة لنفس الشهر بعد ما اتضمّت في القيد النهائي
+    state.partialMonthlyPayments = state.partialMonthlyPayments.filter(p => !(p.workerId === w.id && p.month === month));
   }
 
   // نخصم من رصيد كل سلفة استُخدم منها جزء (بدون أي قيد جديد — الفلوس دي أصلًا خرجت وقت السلفة نفسها)
