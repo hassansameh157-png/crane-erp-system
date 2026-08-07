@@ -1783,7 +1783,7 @@
         </div>
       </div>
 
-      <div class="stat-grid cols-3">
+      <div class="stat-grid cols-4">
         <div class="stat-card">
           <p class="stat-label">إجمالي السلف المصروفة</p>
           <p class="stat-value" id="adv-total-advances" style="color:var(--warning)">0.00</p>
@@ -1795,6 +1795,10 @@
         <div class="stat-card">
           <p class="stat-label">إجمالي التأثير على المستحقات</p>
           <p class="stat-value" id="adv-total-impact">0.00</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">⚠️ سلف لم تتم تسويتها بعد</p>
+          <p class="stat-value" id="adv-total-unsettled" style="color:var(--danger)">0.00</p>
         </div>
       </div>
 
@@ -1847,7 +1851,7 @@
 
       <div class="card card-tight">
         <table class="mono-table">
-          <thead><tr><th>التاريخ</th><th>العامل</th><th>النوع</th><th>المشروع</th><th>السبب</th><th class="text-left">المبلغ</th><th></th></tr></thead>
+          <thead><tr><th>التاريخ</th><th>العامل</th><th>النوع</th><th>الحالة</th><th>المشروع</th><th>السبب</th><th class="text-left">المبلغ</th><th></th></tr></thead>
           <tbody id="adv-table-body"></tbody>
         </table>
         <div class="empty-state" id="adv-empty" style="display:none"><div class="icon">📋</div><p>لا توجد سلف أو خصومات مسجلة بعد</p></div>
@@ -8279,13 +8283,20 @@ let advFormTreasury = 'بنك';
 function renderAdvancesPage() {
   populateSelect(document.getElementById('adv-filter-worker'), state.workers.map(w => w.name), 'كل العمال', '');
 
-  let totalAdvances = 0, totalDeductions = 0;
+  let totalAdvances = 0, totalDeductions = 0, totalUnsettled = 0;
   state.advancesDeductions.forEach(a => {
-    if (a.type === 'سلفة') totalAdvances += a.amount; else totalDeductions += a.amount;
+    if (a.type === 'سلفة') {
+      totalAdvances += a.amount;
+      const remaining = a.amountRemaining !== undefined ? a.amountRemaining : a.amount;
+      if (remaining > 0.005) totalUnsettled += remaining;
+    } else {
+      totalDeductions += a.amount;
+    }
   });
   document.getElementById('adv-total-advances').textContent = fmt(totalAdvances);
   document.getElementById('adv-total-deductions').textContent = fmt(totalDeductions);
   document.getElementById('adv-total-impact').textContent = fmt(totalAdvances + totalDeductions);
+  document.getElementById('adv-total-unsettled').textContent = fmt(totalUnsettled);
 
   renderAdvancesTable();
 }
@@ -8308,11 +8319,23 @@ function renderAdvancesTable() {
     const typeBadge = a.type === 'سلفة'
       ? '<span class="badge badge-warning">سلفة</span>'
       : '<span class="badge badge-danger">خصم</span>';
+
+    let statusBadge;
+    if (a.type === 'سلفة') {
+      const remaining = a.amountRemaining !== undefined ? a.amountRemaining : a.amount;
+      statusBadge = remaining <= 0.005
+        ? '<span class="badge badge-success">✓ تم التسوية</span>'
+        : `<span class="badge badge-warning">لم يتم التسوية (متبقي ${fmt(remaining)})</span>`;
+    } else {
+      statusBadge = '<span class="badge badge-mute">مطبّق فورًا</span>';
+    }
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${fmtDate(a.date)}</td>
       <td>${w ? w.name : '—'}</td>
       <td>${typeBadge}</td>
+      <td>${statusBadge}</td>
       <td>${a.project || '—'}</td>
       <td>${a.reason || '—'}</td>
       <td class="text-left num" style="font-weight:700">${fmt(a.amount)}</td>
@@ -9013,10 +9036,15 @@ const EXPORT_DATA_PROVIDERS = {
       title: 'تقرير السلف والخصومات',
       sections: [{
         heading: null,
-        columns: ['التاريخ', 'العامل', 'النوع', 'المشروع', 'السبب', 'المبلغ'],
+        columns: ['التاريخ', 'العامل', 'النوع', 'الحالة', 'المشروع', 'السبب', 'المبلغ'],
         rows: rows.map(a => {
           const w = state.workers.find(w => w.id === a.workerId);
-          return [fmtDate(a.date), w ? w.name : '—', a.type, a.project || '—', a.reason || '—', a.amount];
+          let status = 'مطبّق فورًا';
+          if (a.type === 'سلفة') {
+            const remaining = a.amountRemaining !== undefined ? a.amountRemaining : a.amount;
+            status = remaining <= 0.005 ? 'تم التسوية' : `لم يتم التسوية (متبقي ${fmt(remaining)})`;
+          }
+          return [fmtDate(a.date), w ? w.name : '—', a.type, status, a.project || '—', a.reason || '—', a.amount];
         })
       }]
     };
