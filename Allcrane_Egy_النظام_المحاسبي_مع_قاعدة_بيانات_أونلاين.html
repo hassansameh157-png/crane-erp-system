@@ -1557,10 +1557,15 @@
         <div class="card" style="margin-bottom:20px">
           <div class="stat-grid cols-3" id="ld-settlement-stats" style="margin-bottom:16px"></div>
 
-          <p style="font-size:12.5px;color:var(--ink-mute);margin:0 0 8px">أيام العمل غير المسددة (الأقدم أولًا) — مبلغ السداد بيتوزع عليهم أوتوماتيك</p>
+          <div id="ld-advance-balance-section" style="display:none;margin-bottom:16px">
+            <p style="font-size:12.5px;color:var(--ink-mute);margin:0 0 8px">رصيد السلف المتاح — اختياري، تقدر تستخدم منه كامل أو جزء لتغطية أي يوم تحدده</p>
+            <div id="ld-advance-balance-list"></div>
+          </div>
+
+          <p style="font-size:12.5px;color:var(--ink-mute);margin:0 0 8px">أيام العمل غير المسددة (الأقدم أولًا) — حدد المبلغ لكل يوم بنفسك</p>
           <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px">
-            <div style="display:grid;grid-template-columns:80px 55px 1fr 1fr 85px 85px 28px;gap:8px;padding:9px 12px;background:var(--surface-2);font-size:11.5px;color:var(--ink-mute);font-weight:700">
-              <span>التاريخ</span><span>اليوم</span><span>المشروع</span><span>الوصف</span><span style="text-align:left">المستحق</span><span style="text-align:left">المتبقي</span><span></span>
+            <div style="display:grid;grid-template-columns:80px 55px 1fr 1fr 85px 100px;gap:8px;padding:9px 12px;background:var(--surface-2);font-size:11.5px;color:var(--ink-mute);font-weight:700">
+              <span>التاريخ</span><span>اليوم</span><span>المشروع</span><span>الوصف</span><span style="text-align:left">المتبقي</span><span style="text-align:left">مبلغ السداد</span>
             </div>
             <div id="ld-settlement-rows"></div>
           </div>
@@ -1571,8 +1576,8 @@
               <input type="date" id="ld-payment-date">
             </div>
             <div class="field">
-              <label>مبلغ السداد (يمكن سداد جزء من المستحق)</label>
-              <input type="number" id="ld-payment-amount" min="0" step="0.01">
+              <label>إجمالي المحدد للسداد</label>
+              <input type="text" id="ld-payment-amount-display" disabled style="background:var(--surface-2);font-weight:700">
             </div>
             <div class="field">
               <label>السداد من</label>
@@ -6264,30 +6269,19 @@ function attendancePaidAmount(attendanceId) {
   return paid;
 }
 
-/* إجمالي السلف والخصومات المسجلة على عامل معين (بتتخصم من صافي المستحق) */
-function workerAdvancesDeductions(workerId) {
-  let advances = 0, deductions = 0;
-  (state.advancesDeductions || []).forEach(a => {
-    if (a.workerId !== workerId) return;
-    if (a.consumedInMonth) return; // اتخصمت بالفعل في تسوية شهرية سابقة
-    if (a.settled) return; // اتقفلت بالفعل في تسوية يومية سابقة
-    if (a.type === 'سلفة') advances += a.amount; else deductions += a.amount;
-  });
-  return { advances, deductions, total: advances + deductions };
+/* كل السلف والخصومات المفتوحة (لسه ما اتحسبتش) لعامل معين، بغض النظر عن الشهر — بترتيب الأقدم أولًا */
+function openAdvancesDeductionsForWorker(workerId) {
+  return (state.advancesDeductions || [])
+    .filter(a => a.workerId === workerId)
+    .filter(a => {
+      if (a.type === 'سلفة') return (a.amountRemaining !== undefined ? a.amountRemaining : a.amount) > 0.005;
+      return true; // الخصم دايمًا "نشط" بمجرد تسجيله لحد ما يتحذف يدويًا
+    })
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
 }
 
-/* السلف المفتوحة (غير مقفولة بعد) لعامل معين، بترتيب الأقدم أولًا — تُستخدم وقت التسوية لتحديد أي سلف تتقفل */
 function openAdvancesForWorker(workerId) {
-  return (state.advancesDeductions || [])
-    .filter(a => a.workerId === workerId && a.type === 'سلفة' && !a.settled && !a.consumedInMonth)
-    .sort((a, b) => (a.date < b.date ? -1 : 1));
-}
-
-/* السلف والخصومات الخاصة بشهر معين لموظف معين (مش مستهلكة في تسوية سابقة) — بتُستخدم في تفصيل سداد الراتب الشهري */
-function monthlyAdvancesDeductionsDetail(workerId, month) {
-  return (state.advancesDeductions || [])
-    .filter(a => a.workerId === workerId && !a.consumedInMonth && a.date.startsWith(month))
-    .sort((a, b) => (a.date < b.date ? -1 : 1));
+  return openAdvancesDeductionsForWorker(workerId).filter(a => a.type === 'سلفة');
 }
 
 /* السجل الشهري: لكل موظف شهري، بنتتبع أي شهور (YYYY-MM) اتسدد مرتبها بالفعل،
@@ -6321,7 +6315,6 @@ function isMonthManuallyClosed(workerId, month) {
   return closedList.includes(month);
 }
 
-/* حساب مستحقات شهر معين لموظف شهري: المرتب الأساسي (لو الشهر خلص فعليًا أو اتقفل يدويًا، ولسه ما اتسددش) + إجمالي البدلات/الإضافي المسجلة في الشهر */
 /* إجمالي المسدد فعليًا لشهر معين لموظف شهري (مجموع كل حركات monthlySettlement لنفس الشهر) */
 function monthlyPaidAmount(workerId, month) {
   let paid = 0;
@@ -6331,44 +6324,54 @@ function monthlyPaidAmount(workerId, month) {
   return paid;
 }
 
+/* حساب مستحقات شهر معين لموظف شهري:
+   - grossTotal: إجمالي المرتب الكامل + البدلات (ده اللي بيترحّل في القيد المحاسبي وقت السداد)
+   - netDisplayed: المستحق المعروض للمستخدم بعد خصم السلف والخصومات المفتوحة (ده اللي بيُطلب منك تدفعه فعليًا) */
 function computeMonthlyDues(workerId, month) {
   const w = state.workers.find(w => w.id === workerId);
-  if (!w) return { baseSalary: 0, extras: 0, total: 0, paid: 0, isPaid: false, monthReady: false };
+  if (!w) return { baseSalary: 0, extras: 0, grossTotal: 0, netDisplayed: 0, paid: 0, isPaid: false, monthReady: false, openAdvDed: 0 };
   const monthRecords = workerAttendanceRecords(workerId).filter(a => a.date.startsWith(month));
   const extras = monthRecords.reduce((s, a) => s + a.totalDue, 0); // totalDue هنا بيبقى بس الإضافي+البدلات للموظف الشهري
   const monthReady = isMonthEnded(month) || isMonthManuallyClosed(workerId, month);
   const baseSalary = monthReady ? w.monthlySalary : 0;
-  const total = baseSalary + extras;
+  const grossTotal = baseSalary + extras;
+
+  // الخصومات بس بتتخصم من "المعروض" تلقائيًا وفورًا. السلف تفضل "رصيد متاح" بس، ومالهاش أي أثر تلقائي على المعروض
+  // إلا لو المستخدم بنفسه اختار يستخدم منها جزء وقت السداد (من شاشة السداد مباشرة)
+  const openDeductions = openAdvancesDeductionsForWorker(workerId).filter(a => a.type === 'خصم').reduce((s, a) => s + a.amount, 0);
+  const openAdvances = openAdvancesDeductionsForWorker(workerId).filter(a => a.type === 'سلفة');
+  const openAdvBalance = openAdvances.reduce((s, a) => s + (a.amountRemaining !== undefined ? a.amountRemaining : a.amount), 0);
+  const netDisplayed = Math.max(0, grossTotal - openDeductions);
+
   const paid = monthlyPaidAmount(workerId, month);
-  const isPaid = total > 0 && paid >= total - 0.005; // مسدد بالكامل فعليًا (مبني على المبلغ الفعلي مش وجود حركة)
-  return { baseSalary, extras, total, paid, isPaid, monthReady, daysRecorded: monthRecords.length };
+  const isPaid = netDisplayed > 0 && paid >= netDisplayed - 0.005;
+  return { baseSalary, extras, grossTotal, netDisplayed, paid, isPaid, monthReady, openAdvDed: openDeductions, openAdvBalance, daysRecorded: monthRecords.length };
 }
 
 function computeWorkerDues(workerId) {
   const w = state.workers.find(w => w.id === workerId);
   if (w && w.employmentType === 'شهري') {
-    // للموظف الشهري: المستحق المفتوح = مجموع (كل شهر - المسدد منه فعليًا) لكل الشهور اللي فيها نشاط
+    // للموظف الشهري: المستحق المفتوح = مجموع (المستحق الصافي بعد خصم السلف/الخصومات - المسدد فعليًا) لكل الشهور اللي فيها نشاط
     const months = activityMonthsForWorker(workerId);
     let totalDue = 0, totalPaid = 0;
     months.forEach(m => {
       const md = computeMonthlyDues(workerId, m);
-      totalDue += md.total; // إجمالي مستحق الشهر (بغض النظر هل اتسدد أو لأ)
-      totalPaid += md.paid; // المسدد فعليًا من الشهر ده (بيدعم الدفعات الجزئية)
+      totalDue += md.netDisplayed; // المستحق الصافي بعد خصم السلف/الخصومات المفتوحة
+      totalPaid += md.paid;
     });
-    const adv = workerAdvancesDeductions(workerId);
-    const balanceDue = Math.max(0, totalDue - totalPaid - adv.total);
+    const balanceDue = Math.max(0, totalDue - totalPaid);
     const daysWorked = workerAttendanceRecords(workerId).filter(a => a.status === 'حاضر').length;
-    return { daysWorked, totalDue, totalPaid, advancesDeductions: adv.total, balanceDue, employmentType: 'شهري' };
+    return { daysWorked, totalDue, totalPaid, advancesDeductions: 0, balanceDue, employmentType: 'شهري' };
   }
 
   const records = workerAttendanceRecords(workerId);
   const totalDue = records.reduce((s, r) => s + r.totalDue, 0);
   let totalPaid = 0;
   records.forEach(r => { totalPaid += attendancePaidAmount(r.id); });
-  const adv = workerAdvancesDeductions(workerId);
-  // صافي المستحق = إجمالي المستحق - المسدد فعليًا - السلف والخصومات غير المطبقة بعد
-  const balanceDue = Math.max(0, totalDue - totalPaid - adv.total);
-  return { daysWorked: records.length, totalDue, totalPaid, advancesDeductions: adv.total, balanceDue, employmentType: 'يومي' };
+  // السلفة تفضل "رصيد متاح" بس ومالهاش أثر تلقائي على المستحق — بس الخصومات هي اللي بتقلل المستحق المعروض فورًا
+  const openDeductions = openAdvancesDeductionsForWorker(workerId).filter(a => a.type === 'خصم').reduce((s, a) => s + a.amount, 0);
+  const balanceDue = Math.max(0, totalDue - totalPaid - openDeductions);
+  return { daysWorked: records.length, totalDue, totalPaid, advancesDeductions: openDeductions, balanceDue, employmentType: 'يومي' };
 }
 
 function unpaidAttendanceForWorker(workerId) {
@@ -7519,13 +7522,14 @@ function openLaborSettlement(workerId) {
   ldTreasury = 'بنك';
   document.getElementById('ld-treasury-bank-btn').classList.add('selected');
   document.getElementById('ld-treasury-custody-btn').classList.remove('selected');
+  ldSelectedAdvanceAmount = 0;
 
   const w = state.workers.find(w => w.id === workerId);
   document.getElementById('ld-settlement-title').textContent = `سداد مستحقات — ${w.name}`;
   document.getElementById('ld-settlement-section').style.display = 'block';
   renderLaborSettlementStats();
+  renderLdAdvanceBalance();
   renderLaborSettlementRows();
-  document.getElementById('ld-payment-amount').value = '';
   document.getElementById('ld-payment-date').valueAsDate = new Date();
   document.getElementById('ld-payment-preview-note').style.display = 'none';
   document.getElementById('ld-settlement-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -7533,9 +7537,7 @@ function openLaborSettlement(workerId) {
 
 function renderLaborSettlementStats() {
   const dues = computeWorkerDues(currentSettlementWorkerId);
-  const openAdvTotal = openAdvancesForWorker(currentSettlementWorkerId).reduce((s, a) => s + a.amount, 0);
   const unpaidDaysTotal = unpaidAttendanceForWorker(currentSettlementWorkerId).reduce((s, a) => s + (a.totalDue - a.paid), 0);
-  const maxAllowed = unpaidDaysTotal + openAdvTotal;
 
   document.getElementById('ld-settlement-stats').innerHTML = `
     <div class="stat-card">
@@ -7548,48 +7550,98 @@ function renderLaborSettlementStats() {
     </div>
     <div class="stat-card">
       <p class="stat-label">الحد الأقصى لهذه الدفعة</p>
-      <p class="stat-value small" style="color:var(--danger)">${fmt(maxAllowed)}</p>
+      <p class="stat-value small" style="color:var(--danger)">${fmt(unpaidDaysTotal)}</p>
     </div>
   `;
 
-  if (openAdvTotal > 0.005) {
-    document.getElementById('ld-open-advance-banner') && document.getElementById('ld-open-advance-banner').remove();
+  const existingBanner = document.getElementById('ld-open-advance-banner');
+  if (existingBanner) existingBanner.remove();
+
+  if (dues.advancesDeductions > 0.005) {
     const banner = document.createElement('div');
     banner.id = 'ld-open-advance-banner';
-    banner.style.cssText = 'background:var(--danger-bg);border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--danger)';
-    banner.innerHTML = `<span>⚠️ سلفة مفتوحة</span><span style="font-weight:700">${fmt(openAdvTotal)}</span>`;
+    banner.style.cssText = 'background:var(--warning-bg);border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--warning)';
+    banner.innerHTML = `<span>⚠️ خصومات مفتوحة (مخصومة من الرصيد بدون قيد)</span><span style="font-weight:700">${fmt(dues.advancesDeductions)}</span>`;
     document.getElementById('ld-settlement-stats').insertAdjacentElement('afterend', banner);
-  } else {
-    const existing = document.getElementById('ld-open-advance-banner');
-    if (existing) existing.remove();
   }
 }
 
 function updateLdPaymentPreview() {
-  const amountPaid = parseFloat(document.getElementById('ld-payment-amount').value) || 0;
-  const noteEl = document.getElementById('ld-payment-preview-note');
-  const openAdvTotal = openAdvancesForWorker(currentSettlementWorkerId).reduce((s, a) => s + a.amount, 0);
-
-  if (amountPaid <= 0 || openAdvTotal <= 0.005) {
-    noteEl.style.display = 'none';
-    return;
-  }
-
-  const toAdvance = Math.min(amountPaid, openAdvTotal);
-  const toDays = Math.max(0, amountPaid - toAdvance);
-  noteEl.style.display = 'block';
-  noteEl.innerHTML = `من الدفعة، <b>${fmt(toAdvance)}</b> يقفل السلفة المفتوحة، والباقي <b>${fmt(toDays)}</b> يُطبَّق على أيام العمل`;
+  document.getElementById('ld-payment-preview-note').style.display = 'none';
 }
 
 document.getElementById('ld-payment-amount').addEventListener('input', updateLdPaymentPreview);
+
+let ldSelectedAdvanceAmount = 0; // كام من رصيد السلف المتاح المستخدم قررت يستخدمه في الدفعة دي
+
+function renderLdAdvanceBalance() {
+  const section = document.getElementById('ld-advance-balance-section');
+  const listEl = document.getElementById('ld-advance-balance-list');
+  const openAdv = openAdvancesForWorker(currentSettlementWorkerId);
+
+  if (openAdv.length === 0) {
+    section.style.display = 'none';
+    ldSelectedAdvanceAmount = 0;
+    return;
+  }
+
+  section.style.display = 'block';
+  listEl.innerHTML = '';
+  openAdv.forEach(a => {
+    const remaining = a.amountRemaining !== undefined ? a.amountRemaining : a.amount;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:90px 1fr 100px 90px;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12.5px';
+    row.innerHTML = `
+      <span>${fmtDate(a.date)}</span>
+      <span style="color:var(--ink-soft)">${a.reason || 'سلفة'} — رصيد متاح: <b class="num">${fmt(remaining)}</b></span>
+      <span></span>
+      <span></span>
+    `;
+    const inputCell = row.children[2];
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.max = remaining;
+    input.step = '0.01';
+    input.placeholder = '0.00';
+    input.style.width = '100%';
+    input.dataset.advId = a.id;
+    input.addEventListener('input', () => {
+      let val = parseFloat(input.value) || 0;
+      if (val > remaining) { val = remaining; input.value = remaining; }
+      if (val < 0) { val = 0; input.value = 0; }
+      recalcLdSelectedAdvance();
+    });
+    inputCell.appendChild(input);
+
+    const fullBtn = row.children[3];
+    const useBtn = document.createElement('button');
+    useBtn.className = 'btn btn-sm';
+    useBtn.textContent = 'استخدام الكل';
+    useBtn.addEventListener('click', () => { input.value = remaining; recalcLdSelectedAdvance(); });
+    fullBtn.appendChild(useBtn);
+
+    listEl.appendChild(row);
+  });
+}
+
+function recalcLdSelectedAdvance() {
+  const inputs = document.querySelectorAll('#ld-advance-balance-list input[data-adv-id]');
+  ldSelectedAdvanceAmount = [...inputs].reduce((s, inp) => s + (parseFloat(inp.value) || 0), 0);
+  updateLdTotalDisplay();
+}
+
+let ldSelectedPayments = {}; // { attendanceId: amount } — المبالغ اللي المستخدم حددها يدويًا لكل يوم
 
 function renderLaborSettlementRows() {
   const container = document.getElementById('ld-settlement-rows');
   container.innerHTML = '';
   const unpaid = unpaidAttendanceForWorker(currentSettlementWorkerId);
+  ldSelectedPayments = {};
 
   if (unpaid.length === 0) {
     container.innerHTML = `<div class="empty-state" style="padding:20px"><p>لا توجد أيام حضور غير مسددة لهذا العامل</p></div>`;
+    updateLdTotalDisplay();
     return;
   }
 
@@ -7638,7 +7690,7 @@ function renderLaborSettlementRows() {
       const remaining = a.totalDue - a.paid;
       const row = document.createElement('div');
       row.style.display = 'grid';
-      row.style.gridTemplateColumns = '80px 55px 1fr 1fr 85px 85px 28px';
+      row.style.gridTemplateColumns = '80px 55px 1fr 1fr 85px 100px';
       row.style.gap = '8px';
       row.style.padding = '8px 12px';
       row.style.borderTop = '1px solid var(--border)';
@@ -7650,23 +7702,65 @@ function renderLaborSettlementRows() {
         <span style="color:var(--ink-mute);font-size:11px">${arabicDayName(a.date)}</span>
         <span>${a.projectId}</span>
         <span style="color:var(--ink-soft);font-size:11.5px">${a.description ? escapeHtml(a.description) : '—'}</span>
-        <span class="num" style="text-align:left">${fmt(a.totalDue)}</span>
-        <span class="num" style="text-align:left;font-weight:700;color:${remaining < a.totalDue - 0.005 ? 'var(--warning)' : 'var(--ink)'}">${fmt(remaining)}</span>
+        <span class="num" style="text-align:left;font-weight:700;color:var(--warning)">${fmt(remaining)}</span>
         <span></span>
       `;
-      const rateEditBtn = document.createElement('button');
-      rateEditBtn.className = 'icon-btn';
-      rateEditBtn.textContent = '✏️';
-      rateEditBtn.title = 'تعديل يومية هذا اليوم بالذات';
-      rateEditBtn.style.fontSize = '11px';
-      rateEditBtn.addEventListener('click', () => openAttendanceRateEditModal(a.id));
-      row.lastElementChild.appendChild(rateEditBtn);
+
+      const amountCell = row.lastElementChild;
+      const amountInput = document.createElement('input');
+      amountInput.type = 'number';
+      amountInput.min = '0';
+      amountInput.max = remaining;
+      amountInput.step = '0.01';
+      amountInput.placeholder = '0.00';
+      amountInput.style.width = '100%';
+      amountInput.style.fontSize = '12px';
+      amountInput.addEventListener('input', () => {
+        let val = parseFloat(amountInput.value) || 0;
+        if (val > remaining) { val = remaining; amountInput.value = remaining; }
+        if (val < 0) { val = 0; amountInput.value = 0; }
+        if (val > 0.005) ldSelectedPayments[a.id] = val;
+        else delete ldSelectedPayments[a.id];
+        updateLdTotalDisplay();
+      });
+      amountCell.appendChild(amountInput);
+
+      const fullBtn = document.createElement('button');
+      fullBtn.className = 'icon-btn';
+      fullBtn.textContent = '✓';
+      fullBtn.title = 'سداد المتبقي بالكامل لهذا اليوم';
+      fullBtn.style.fontSize = '11px';
+      fullBtn.addEventListener('click', () => {
+        amountInput.value = remaining;
+        ldSelectedPayments[a.id] = remaining;
+        updateLdTotalDisplay();
+      });
+      amountCell.appendChild(fullBtn);
+
       rowsWrapper.appendChild(row);
     });
 
     container.appendChild(monthHeader);
     container.appendChild(rowsWrapper);
   });
+
+  updateLdTotalDisplay();
+}
+
+/* يحسب إجمالي المبالغ المحددة يدويًا + المستخدم من رصيد السلف، ويحدّث العرض والمعاينة */
+function updateLdTotalDisplay() {
+  const daysTotal = Object.values(ldSelectedPayments).reduce((s, v) => s + v, 0);
+  const advanceUsed = ldSelectedAdvanceAmount || 0;
+  const grandTotal = daysTotal + advanceUsed;
+  document.getElementById('ld-payment-amount-display').value = fmt(grandTotal);
+
+  const noteEl = document.getElementById('ld-payment-preview-note');
+  if (advanceUsed > 0.005) {
+    noteEl.style.display = 'block';
+    noteEl.innerHTML = `مصدر الدفعة: <b>${fmt(advanceUsed)}</b> من رصيد السلفة المتاح، <b>${fmt(daysTotal)}</b> دفعة نقدية عادية`;
+  } else {
+    noteEl.style.display = 'none';
+  }
 }
 
 /* ============ تعديل يومية يوم حضور معين ============ */
@@ -7762,97 +7856,52 @@ function buildLaborSettlementDescription(workerName, datesInvolved) {
 
 document.getElementById('ld-settlement-submit').addEventListener('click', () => {
   const w = state.workers.find(w => w.id === currentSettlementWorkerId);
-  const dues = computeWorkerDues(currentSettlementWorkerId);
-  const amountPaid = parseFloat(document.getElementById('ld-payment-amount').value) || 0;
   const paymentDate = document.getElementById('ld-payment-date').value;
+  const unpaid = unpaidAttendanceForWorker(currentSettlementWorkerId);
 
-  // الحد الأقصى المسموح = إجمالي أيام العمل الغير مسددة + إجمالي السلف المفتوحة (بما إن المبلغ المدخل بقى إجمالي، مش صافي بعد خصم السلف)
-  const openAdvTotal = openAdvancesForWorker(currentSettlementWorkerId).reduce((s, a) => s + a.amount, 0);
-  const unpaidDaysTotal = unpaidAttendanceForWorker(currentSettlementWorkerId).reduce((s, a) => s + (a.totalDue - a.paid), 0);
-  const maxAllowed = unpaidDaysTotal + openAdvTotal;
+  const dayEntries = Object.entries(ldSelectedPayments).filter(([, amt]) => amt > 0.005);
+  const daysTotal = dayEntries.reduce((s, [, amt]) => s + amt, 0);
+  const advanceUsed = ldSelectedAdvanceAmount || 0;
 
   if (!paymentDate) { showToast('من فضلك اختر تاريخ السداد', true); return; }
-  if (amountPaid <= 0) { showToast('من فضلك أدخل مبلغ سداد أكبر من صفر', true); return; }
-  if (amountPaid > maxAllowed + 0.005) {
-    showToast(`المبلغ أكبر من إجمالي المستحق (${fmt(maxAllowed)}${openAdvTotal > 0.005 ? ` شامل سلفة مفتوحة ${fmt(openAdvTotal)}` : ''})`, true);
-    return;
+  if (dayEntries.length === 0) { showToast('من فضلك حدد مبلغ لسداد يوم واحد على الأقل', true); return; }
+
+  // نتحقق إن مجموع المحدد لكل يوم منطقي (مش أكبر من المتبقي الفعلي لأي يوم)
+  for (const [attId, amt] of dayEntries) {
+    const a = unpaid.find(u => u.id === attId);
+    if (!a) { showToast('حصل خطأ في تحديد أحد الأيام، من فضلك أعد المحاولة', true); return; }
+    const remaining = a.totalDue - a.paid;
+    if (amt > remaining + 0.005) { showToast(`المبلغ المحدد ليوم ${fmtDate(a.date)} أكبر من المتبقي عليه (${fmt(remaining)})`, true); return; }
   }
 
-  // توزيع مبلغ السداد على الأيام غير المسددة الأقدم أولًا (FIFO) — بيسمح بسداد جزء من يوم واحد
-  const unpaid = unpaidAttendanceForWorker(currentSettlementWorkerId);
-  let remainingToApply = amountPaid;
-  const lines = [];
+  // نتحقق إن استخدام رصيد السلف منطقي (مش أكبر من الرصيد الفعلي المتاح لأي سلفة)
+  const advInputs = document.querySelectorAll('#ld-advance-balance-list input[data-adv-id]');
+  const advUsageByAdvId = {};
+  advInputs.forEach(inp => {
+    const val = parseFloat(inp.value) || 0;
+    if (val > 0.005) advUsageByAdvId[inp.dataset.advId] = val;
+  });
+  for (const [advId, usedAmt] of Object.entries(advUsageByAdvId)) {
+    const adv = state.advancesDeductions.find(a => a.id === advId);
+    const remaining = adv ? (adv.amountRemaining !== undefined ? adv.amountRemaining : adv.amount) : 0;
+    if (usedAmt > remaining + 0.005) { showToast('مبلغ مستخدم من إحدى السلف أكبر من رصيدها المتاح', true); return; }
+  }
+
+  // نوزّع (الدفعة النقدية + رصيد السلفة المستخدم) على حركة منفصلة لكل مشروع، بنفس تفاصيل الأيام المحددة يدويًا
   const touchedProjects = {};
-  const touchedCustomers = {};
-  const datesInvolved = new Set();
+  const lines = [];
+  dayEntries.forEach(([attId, amt]) => {
+    const a = unpaid.find(u => u.id === attId);
+    lines.push({ attendanceId: attId, amountApplied: amt });
+    touchedProjects[a.projectId] = (touchedProjects[a.projectId] || 0) + amt;
+  });
 
-  // الخطوة 1: نقفل أي سلف مفتوحة أولًا (الأقدم فالأقدم)، ونحدد تاريخ أول يوم عمل هيتغطى بالباقي بعد القفل
-  const openAdvances = openAdvancesForWorker(currentSettlementWorkerId);
-  let advancesClosedTotal = 0;
-  const closedAdvanceIds = [];
-  for (const adv of openAdvances) {
-    if (remainingToApply <= 0.005) break;
-    const closeAmount = Math.min(adv.amount, remainingToApply);
-    if (closeAmount <= 0.005) continue;
-    advancesClosedTotal += closeAmount;
-    closedAdvanceIds.push({ id: adv.id, closeAmount, fullyClosed: closeAmount >= adv.amount - 0.005 });
-    remainingToApply -= closeAmount;
-  }
-
-  for (const a of unpaid) {
-    if (remainingToApply <= 0.005) break;
-    const dayRemaining = a.totalDue - a.paid;
-    const applyAmount = Math.min(dayRemaining, remainingToApply);
-    if (applyAmount <= 0.005) continue;
-    lines.push({ attendanceId: a.id, amountApplied: applyAmount });
-    touchedProjects[a.projectId] = (touchedProjects[a.projectId] || 0) + applyAmount;
-    datesInvolved.add(a.date);
-    remainingToApply -= applyAmount;
-  }
-
-  if (lines.length === 0 && advancesClosedTotal <= 0.005) { showToast('لا توجد أيام مستحقة أو سلف مفتوحة لتطبيق السداد عليها', true); return; }
-
-  // قيد إغلاق السلفة: بمبلغ سالب على نفس حساب "سلف عمالة"، بتاريخ أول يوم عمل غطّاه المبلغ المتبقي بعد القفل
-  // (لو مفيش أيام اتغطت خالص، ياخد تاريخ السداد نفسه)
-  if (advancesClosedTotal > 0.005) {
-    const sortedDates = [...datesInvolved].sort();
-    const closingDate = sortedDates.length > 0 ? sortedDates[0] : paymentDate;
-    const closingTxn = {
-      id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
-      seq: state.nextTxnNo,
-      date: closingDate,
-      kind: 'إيراد', // قيد إغلاق بمبلغ موجب على نفس حساب المصروف، يعادل تسجيل مصروف سالب (بيصفّر الأثر)
-      account: 'سلف عمالة',
-      project: 'عام / غير محدد',
-      customer: 'عام / غير محدد',
-      desc: `إغلاق سلفة عامل — ${w.name}`,
-      amount: advancesClosedTotal,
-      treasury: ldTreasury,
-      notes: `تم قفل سلفة بقيمة ${fmt(advancesClosedTotal)} ضمن تسوية بتاريخ ${fmtDate(paymentDate)}`,
-      isInternalClearing: true,
-      laborAdvanceClosing: { workerId: w.id, closedAdvanceIds: closedAdvanceIds.map(c => c.id) }
-    };
-    state.transactions.push(closingTxn);
-    state.nextTxnNo += 1;
-
-    // نعلّم السلف المقفولة عشان متتحسبش تاني كذمة مفتوحة
-    closedAdvanceIds.forEach(c => {
-      const advRecord = state.advancesDeductions.find(a => a.id === c.id);
-      if (advRecord && c.fullyClosed) advRecord.settled = true;
-    });
-  }
-
-  // نوزّع السداد على حركة منفصلة لكل مشروع، بمبلغ فعلي يعكس نصيب كل مشروع من الأيام المسددة
-  // (بدل ما تتحمّل قيمة السداد بالكامل على مشروع واحد بس)
   const projectNames = Object.keys(touchedProjects);
   const createdTxnIds = [];
 
   projectNames.forEach(projectName => {
     const projectAmount = touchedProjects[projectName];
-    const projectLines = lines.filter(l => {
-      const a = unpaid.find(u => u.id === l.attendanceId);
-      return a.projectId === projectName;
-    });
+    const projectLines = lines.filter(l => unpaid.find(u => u.id === l.attendanceId).projectId === projectName);
     const projectDates = new Set(projectLines.map(l => unpaid.find(u => u.id === l.attendanceId).date));
 
     const relatedTxn = state.transactions.find(t => t.project === projectName && t.customer);
@@ -7885,12 +7934,23 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
     createdTxnIds.push(txn.id);
     state.nextTxnNo += 1;
   });
+
+  // نخصم من رصيد كل سلفة استُخدم منها جزء (بدون أي قيد جديد — الفلوس دي أصلًا خرجت وقت السلفة نفسها)
+  Object.entries(advUsageByAdvId).forEach(([advId, usedAmt]) => {
+    const adv = state.advancesDeductions.find(a => a.id === advId);
+    if (adv) {
+      const currentRemaining = adv.amountRemaining !== undefined ? adv.amountRemaining : adv.amount;
+      adv.amountRemaining = Math.max(0, currentRemaining - usedAmt);
+    }
+  });
+
   renumberAllTransactionsByDate();
 
-  logAuditEvent('سداد مستحقات عامل', `${w.name}: ${fmt(amountPaid)} ج.م من ${ldTreasury} بتاريخ ${fmtDate(paymentDate)} — موزّعة على ${projectNames.length} مشروع (${projectNames.join('، ')})`);
+  const grandTotal = daysTotal;
+  logAuditEvent('سداد مستحقات عامل', `${w.name}: ${fmt(grandTotal)} ج.م من ${ldTreasury} بتاريخ ${fmtDate(paymentDate)}${advanceUsed > 0.005 ? ` (منها ${fmt(advanceUsed)} من رصيد سلفة)` : ''} — موزّعة على ${projectNames.length} مشروع (${projectNames.join('، ')})`);
   saveState();
 
-  showToast(`تم سداد ${fmt(amountPaid)} ج.م لـ ${w.name} — موزّعة على ${projectNames.length} مشروع`);
+  showToast(`تم سداد ${fmt(grandTotal)} ج.م لـ ${w.name} — موزّعة على ${projectNames.length} مشروع`);
   document.getElementById('ld-settlement-section').style.display = 'none';
   currentSettlementWorkerId = null;
   renderLaborDuesPage();
@@ -7961,10 +8021,7 @@ function renderMonthlySettlementStats() {
 
   const w = state.workers.find(w => w.id === currentMonthlySettlementWorkerId);
   const md = computeMonthlyDues(currentMonthlySettlementWorkerId, month);
-  const monthAdvDeds = monthlyAdvancesDeductionsDetail(currentMonthlySettlementWorkerId, month); // للعرض التفصيلي فقط (خصومات/سلف حصلت في نفس الشهر)
-  const openAdvTotal = openAdvancesForWorker(currentMonthlySettlementWorkerId).reduce((s, a) => s + a.amount, 0);
-  const remainingSalary = Math.max(0, md.total - md.paid);
-  const maxAllowed = remainingSalary + openAdvTotal;
+  const remainingNet = Math.max(0, md.netDisplayed - md.paid);
 
   const closeStatusEl = document.getElementById('ld-monthly-close-status');
   if (md.monthReady) {
@@ -7988,8 +8045,8 @@ function renderMonthlySettlementStats() {
 
   statsEl.innerHTML = `
     <div class="stat-card">
-      <p class="stat-label">إجمالي مستحق الشهر</p>
-      <p class="stat-value small">${fmt(md.total)}</p>
+      <p class="stat-label">إجمالي مرتب الشهر (قبل خصم السلف)</p>
+      <p class="stat-value small">${fmt(md.grossTotal)}</p>
       <p style="font-size:11px;color:var(--ink-mute);margin:4px 0 0">${fmt(md.baseSalary)} (المرتب) + ${fmt(md.extras)} (بدلات/إضافي)</p>
     </div>
     <div class="stat-card">
@@ -7997,20 +8054,22 @@ function renderMonthlySettlementStats() {
       <p class="stat-value small" style="color:var(--success)">${fmt(md.paid)}</p>
     </div>
     <div class="stat-card">
-      <p class="stat-label">الحد الأقصى لهذه الدفعة</p>
-      <p class="stat-value small" style="color:var(--danger)">${fmt(maxAllowed)}</p>
+      <p class="stat-label">المستحق فعليًا (بعد خصم السلف/الخصومات)</p>
+      <p class="stat-value small" style="color:var(--danger)">${fmt(remainingNet)}</p>
     </div>
   `;
 
   const existingBanner = document.getElementById('ld-monthly-open-advance-banner');
   if (existingBanner) existingBanner.remove();
-  if (openAdvTotal > 0.005) {
+  if (md.openAdvDed > 0.005) {
     const banner = document.createElement('div');
     banner.id = 'ld-monthly-open-advance-banner';
-    banner.style.cssText = 'background:var(--danger-bg);border-radius:8px;padding:10px 12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--danger)';
-    banner.innerHTML = `<span>⚠️ سلفة مفتوحة</span><span style="font-weight:700">${fmt(openAdvTotal)}</span>`;
+    banner.style.cssText = 'background:var(--warning-bg);border-radius:8px;padding:10px 12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--warning)';
+    banner.innerHTML = `<span>⚠️ سلف/خصومات مخصومة من المستحق (بعد خصم ${fmt(md.openAdvDed)} سلف/خصومات)</span><span style="font-weight:700">${fmt(md.openAdvDed)}</span>`;
     statsEl.insertAdjacentElement('afterend', banner);
   }
+
+  const monthAdvDeds = openAdvancesDeductionsForWorker(currentMonthlySettlementWorkerId);
 
   // تفصيل البدلات والإضافي حسب يوم الحضور
   const monthRecords = workerAttendanceRecords(currentMonthlySettlementWorkerId).filter(a => a.date.startsWith(month) && (a.overtimeHours > 0 || a.allowance > 0));
@@ -8065,19 +8124,7 @@ function renderMonthlySettlementStats() {
 }
 
 function updateLdMonthlyPaymentPreview() {
-  const noteEl = document.getElementById('ld-monthly-payment-preview-note');
-  const amountPaid = parseFloat(document.getElementById('ld-monthly-payment-amount').value) || 0;
-  const openAdvTotal = openAdvancesForWorker(currentMonthlySettlementWorkerId).reduce((s, a) => s + a.amount, 0);
-
-  if (amountPaid <= 0 || openAdvTotal <= 0.005) {
-    noteEl.style.display = 'none';
-    return;
-  }
-
-  const toAdvance = Math.min(amountPaid, openAdvTotal);
-  const toSalary = Math.max(0, amountPaid - toAdvance);
-  noteEl.style.display = 'block';
-  noteEl.innerHTML = `من الدفعة، <b>${fmt(toAdvance)}</b> يقفل السلفة المفتوحة، والباقي <b>${fmt(toSalary)}</b> يُطبَّق على المرتب`;
+  document.getElementById('ld-monthly-payment-preview-note').style.display = 'none';
 }
 
 document.getElementById('ld-monthly-payment-amount').addEventListener('input', updateLdMonthlyPaymentPreview);
@@ -8106,72 +8153,51 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
 
   const w = state.workers.find(w => w.id === currentMonthlySettlementWorkerId);
   const md = computeMonthlyDues(w.id, month);
-  const remainingSalary = Math.max(0, md.total - md.paid); // المتبقي من المرتب لهذا الشهر بعد أي دفعات سابقة
-  const openAdvTotal = openAdvancesForWorker(w.id).reduce((s, a) => s + a.amount, 0);
-  const maxAllowed = remainingSalary + openAdvTotal;
+  const remainingNet = Math.max(0, md.netDisplayed - md.paid); // المتبقي الصافي بعد خصم السلف/الخصومات وأي دفعات سابقة
 
   const amountPaid = parseFloat(document.getElementById('ld-monthly-payment-amount').value) || 0;
   const paymentDate = document.getElementById('ld-monthly-payment-date').value;
   if (!paymentDate) { showToast('من فضلك اختر تاريخ السداد', true); return; }
   if (amountPaid <= 0) { showToast('من فضلك أدخل مبلغ سداد أكبر من صفر', true); return; }
-  if (amountPaid > maxAllowed + 0.005) {
-    showToast(`المبلغ أكبر من إجمالي المستحق (${fmt(maxAllowed)}${openAdvTotal > 0.005 ? ` شامل سلفة مفتوحة ${fmt(openAdvTotal)}` : ''})`, true);
+  if (amountPaid > remainingNet + 0.005) {
+    showToast(`المبلغ أكبر من المستحق فعليًا بعد خصم السلف/الخصومات (${fmt(remainingNet)})`, true);
     return;
   }
 
-  // الخطوة 1: نقفل أي سلف مفتوحة أولًا (الأقدم فالأقدم) — بنفس منطق السداد اليومي بالظبط
-  const openAdvances = openAdvancesForWorker(w.id);
-  let remainingToApply = amountPaid;
-  let advancesClosedTotal = 0;
-  const closedAdvanceIds = [];
-  for (const adv of openAdvances) {
-    if (remainingToApply <= 0.005) break;
-    const closeAmount = Math.min(adv.amount, remainingToApply);
-    if (closeAmount <= 0.005) continue;
-    advancesClosedTotal += closeAmount;
-    closedAdvanceIds.push({ id: adv.id, closeAmount, fullyClosed: closeAmount >= adv.amount - 0.005 });
-    remainingToApply -= closeAmount;
-  }
-  const salaryPortion = remainingToApply; // الباقي بعد قفل السلف يُطبَّق على المرتب
-
   const monthLabel = formatArabicMonthYear(month);
   const createdTxnIds = [];
+  const isLastPayment = amountPaid >= remainingNet - 0.005; // هل الدفعة دي بتقفل الشهر بالكامل؟
 
-  // قيد إغلاق السلفة (لو فيه سلف اتقفلت)، بتاريخ السداد نفسه — بنفس أسلوب السداد اليومي
-  if (advancesClosedTotal > 0.005) {
-    const closingTxn = {
+  if (!isLastPayment) {
+    // دفعة جزئية (مش آخر واحدة): نسجلها بمبلغها الصافي بس، من غير ما نرحّل القيد الإجمالي الكامل لسه
+    const txn = {
       id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
       seq: state.nextTxnNo,
       date: paymentDate,
-      kind: 'إيراد',
-      account: 'سلف عمالة',
+      kind: 'مصروف',
+      account: LABOR_EXPENSE_ACCOUNT,
       project: 'عام / غير محدد',
       customer: 'عام / غير محدد',
-      desc: `إغلاق سلفة موظف — ${w.name}`,
-      amount: advancesClosedTotal,
+      desc: `دفعة مقدمة من راتب ${w.name} لشهر ${monthLabel}`,
+      amount: amountPaid,
       treasury: ldMonthlyTreasury,
-      notes: `تم قفل سلفة بقيمة ${fmt(advancesClosedTotal)} ضمن تسوية راتب شهر ${monthLabel}`,
-      isInternalClearing: true,
-      laborAdvanceClosing: { workerId: w.id, closedAdvanceIds: closedAdvanceIds.map(c => c.id) }
+      notes: `دفعة جزئية — المستحق الصافي: ${fmt(md.netDisplayed)} | مسدد حتى الآن (شامل هذه الدفعة): ${fmt(md.paid + amountPaid)}`,
+      monthlySettlement: { workerId: w.id, month }
     };
-    state.transactions.push(closingTxn);
+    if (ldMonthlyTreasury === 'بنك') txn.bankAccountId = document.getElementById('ld-monthly-bank-account')?.value || 'default-bank';
+    state.transactions.push(txn);
+    createdTxnIds.push(txn.id);
     state.nextTxnNo += 1;
-    closedAdvanceIds.forEach(c => {
-      const advRecord = state.advancesDeductions.find(a => a.id === c.id);
-      if (advRecord && c.fullyClosed) advRecord.settled = true;
-    });
-  }
+  } else {
+    // آخر دفعة تقفل الشهر بالكامل: نلغي أي حركات دفعات جزئية سابقة لنفس الشهر، ونرحّل قيد واحد بإجمالي المرتب الكامل موزّع على المشاريع
+    state.transactions = state.transactions.filter(t => !(t.monthlySettlement && t.monthlySettlement.workerId === w.id && t.monthlySettlement.month === month));
 
-  if (salaryPortion > 0.005) {
-    // نحدد نصيب كل مشروع من الشهر بناءً على نسبة أيام الحضور الفعلية فيه، ونوزّع الجزء المخصص للمرتب بنفس النسبة
     const monthRecords = workerAttendanceRecords(w.id).filter(a => a.date.startsWith(month));
     const projectDayCounts = {};
     monthRecords.forEach(a => { projectDayCounts[a.projectId] = (projectDayCounts[a.projectId] || 0) + 1; });
     const totalDaysInMonth = Object.values(projectDayCounts).reduce((s, c) => s + c, 0);
 
     if (totalDaysInMonth === 0) {
-      // مفيش أي حضور مسجل في الشهر ده خالص — نسجل الراتب كحركة واحدة عامة (مفيش أساس نوزّع عليه)
-      const desc = `راتب الموظف ${w.name} لشهر ${monthLabel}`;
       const txn = {
         id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
         seq: state.nextTxnNo,
@@ -8180,10 +8206,10 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
         account: LABOR_EXPENSE_ACCOUNT,
         project: 'عام / غير محدد',
         customer: 'عام / غير محدد',
-        desc,
-        amount: salaryPortion,
+        desc: `راتب الموظف ${w.name} لشهر ${monthLabel} (إجمالي، شامل أي دفعات سابقة)`,
+        amount: md.grossTotal,
         treasury: ldMonthlyTreasury,
-        notes: `دفعة من راتب شهر ${monthLabel} — إجمالي الشهر: ${fmt(md.total)} | مسدد سابقًا: ${fmt(md.paid)}`,
+        notes: `إجمالي المرتب: ${fmt(md.grossTotal)} — بعد خصم سلف/خصومات ${fmt(md.openAdvDed)} — الصافي المدفوع: ${fmt(md.netDisplayed)}`,
         monthlySettlement: { workerId: w.id, month }
       };
       if (ldMonthlyTreasury === 'بنك') txn.bankAccountId = document.getElementById('ld-monthly-bank-account')?.value || 'default-bank';
@@ -8191,10 +8217,9 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
       createdTxnIds.push(txn.id);
       state.nextTxnNo += 1;
     } else {
-      // توزيع الجزء المخصص للمرتب على كل مشروع بنسبة أيامه الفعلية من إجمالي أيام الشهر
       Object.entries(projectDayCounts).forEach(([projectName, dayCount]) => {
         const shareRatio = dayCount / totalDaysInMonth;
-        const projectAmount = salaryPortion * shareRatio;
+        const projectAmount = md.grossTotal * shareRatio;
         const relatedTxn = state.transactions.find(t => t.project === projectName && t.customer);
         const projectCustomer = relatedTxn ? relatedTxn.customer : 'عام / غير محدد';
         const desc = `راتب الموظف ${w.name} لشهر ${monthLabel} — نصيب مشروع ${projectName} (${dayCount} من ${totalDaysInMonth} يوم)`;
@@ -8210,7 +8235,7 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
           desc,
           amount: projectAmount,
           treasury: ldMonthlyTreasury,
-          notes: `نسبة الأيام: ${dayCount}/${totalDaysInMonth} — دفعة من راتب شهر ${monthLabel} (إجمالي الشهر: ${fmt(md.total)}، مسدد سابقًا: ${fmt(md.paid)})`,
+          notes: `نسبة الأيام: ${dayCount}/${totalDaysInMonth} — إجمالي المرتب: ${fmt(md.grossTotal)}، بعد خصم سلف/خصومات ${fmt(md.openAdvDed)}`,
           monthlySettlement: { workerId: w.id, month }
         };
         if (ldMonthlyTreasury === 'بنك') txn.bankAccountId = document.getElementById('ld-monthly-bank-account')?.value || 'default-bank';
@@ -8219,13 +8244,16 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
         state.nextTxnNo += 1;
       });
     }
+
+    // السلف والخصومات اللي اتخصمت من الشهر ده بقت "مستهلكة" — نعلّمها عشان متتكررش في شهر جاي
+    openAdvancesDeductionsForWorker(w.id).forEach(a => { a.consumedInSettlement = true; });
   }
   renumberAllTransactionsByDate();
 
-  logAuditEvent('سداد راتب شهري', `${w.name}: ${fmt(amountPaid)} ج.م لشهر ${monthLabel} من ${ldMonthlyTreasury}${advancesClosedTotal > 0.005 ? ` — منها ${fmt(advancesClosedTotal)} لقفل سلفة` : ''}`);
+  logAuditEvent('سداد راتب شهري', `${w.name}: ${fmt(amountPaid)} ج.م لشهر ${monthLabel} من ${ldMonthlyTreasury}${isLastPayment ? ' — تمت تسوية الشهر بالكامل' : ' — دفعة جزئية'}`);
   saveState();
 
-  showToast(`تم سداد ${fmt(amountPaid)} ج.م لـ ${w.name} — راتب شهر ${monthLabel}`);
+  showToast(`تم سداد ${fmt(amountPaid)} ج.م لـ ${w.name} — راتب شهر ${monthLabel}${isLastPayment ? ' (تمت التسوية بالكامل)' : ''}`);
   document.getElementById('ld-monthly-settlement-section').style.display = 'none';
   currentMonthlySettlementWorkerId = null;
   renderLaborDuesPage();
@@ -8353,49 +8381,27 @@ document.getElementById('adv-form-submit').addEventListener('click', () => {
   const type = advFormType;
   const date = new Date().toISOString().slice(0, 10);
   const advId = crypto.randomUUID();
-  let linkedTxnId = null;
 
-  // السلفة = مبلغ خرج فعليًا من الخزينة للعامل -> بتتسجل كحركة مصروف حقيقية مربوطة بالمشروع المحدد
-  // الخصم = تخفيض على مستحقاته بدون خروج فعلي من الخزينة -> بيتسجل كسند داخلي فقط (بدون تأثير على البنك/العهدة)
-  if (type === 'سلفة') {
-    // نبحث عن عميل مرتبط بنفس المشروع من حركات سابقة عشان التوصيف يبقى متسق
-    const relatedTxn = state.transactions.find(t => t.project === project && t.customer);
-    const relatedCustomer = relatedTxn ? relatedTxn.customer : 'عام / غير محدد';
-
-    const txn = {
-      id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
-      seq: state.nextTxnNo,
-      date,
-      kind: 'مصروف',
-      account: 'سلف عمالة',
-      project,
-      customer: relatedCustomer,
-      desc: `سلفة لعامل — ${w.name}${reason ? ' - ' + reason : ''}`,
-      amount,
-      treasury: advFormTreasury,
-      notes: '',
-      laborAdvanceId: advId
-    };
-    if (!state.accounts.expense.includes('سلف عمالة')) state.accounts.expense.push('سلف عمالة');
-    state.transactions.push(txn);
-    linkedTxnId = txn.id;
-    state.nextTxnNo += 1;
-  renumberAllTransactionsByDate();
-  }
-
+  // السلفة (يومي أو شهري) والخصم: كلهم يتسجلوا كـ"رصيد معلّق" بدون أي قيد أو تطبيق تلقائي فوري.
+  // السلفة تفضل متاحة كـ"رصيد" تقدر تستخدمه وقت ما تحب من شاشة السداد (كامل أو جزء منه، على أيام/شهور تختارها بنفسك).
+  // الخصم يقلل المستحق المعروض مباشرة بدون أي قيد أبدًا (زي ما هو).
   state.advancesDeductions.push({
     id: advId,
     workerId: w.id,
     type,
     amount,
+    amountRemaining: amount, // الجزء اللي لسه متاح استخدامه من السلفة (بيقل تدريجيًا كل ما تستخدم منها جزء)
     reason,
     project,
     date,
-    linkedTxnId
+    linkedTxnId: null
   });
 
   saveState();
-  showToast(`تم تسجيل ${type === 'سلفة' ? 'السلفة' : 'الخصم'} بنجاح — هيتخصم أوتوماتيك من مستحقات ${w.name}`);
+  const msg = type === 'سلفة'
+    ? `تم تسجيل السلفة كرصيد متاح — تقدر تستخدمها (كامل أو جزء) وقت ما تحب من شاشة السداد`
+    : `تم تسجيل الخصم — هيتخصم من صافي مستحقات ${w.name} فورًا بدون أي قيد في سجل الحركات`;
+  showToast(msg);
   document.getElementById('adv-form-section').style.display = 'none';
   renderAdvancesPage();
 });
@@ -8763,7 +8769,7 @@ document.getElementById('backup-restore-file').addEventListener('change', (e) =>
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     let parsed;
     try {
       parsed = JSON.parse(reader.result);
@@ -8788,16 +8794,25 @@ document.getElementById('backup-restore-file').addEventListener('change', (e) =>
     }
 
     state = migrateState(parsed.state);
-    saveState();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); // حفظ محلي فوري
 
     if (parsed.companySettings) {
       companySettings = parsed.companySettings;
       saveCompanySettings(companySettings);
     }
 
-    showToast('تم استعادة النسخة الاحتياطية بنجاح — جاري إعادة تحميل النظام');
+    showToast('جاري رفع النسخة الاحتياطية للسحابة، من فضلك انتظر...');
     document.getElementById('backup-restore-file').value = '';
-    setTimeout(() => { location.reload(); }, 1200);
+
+    try {
+      // نستنى الحفظ السحابي فعليًا (مش بس نأجله) عشان المزامنة التلقائية العادية متلغيش النسخة اللي رجعناها
+      await saveStateToCloud(state);
+      showToast('تم استعادة النسخة الاحتياطية بنجاح — جاري إعادة تحميل النظام');
+    } catch (err) {
+      showToast('تم الاسترجاع محليًا، لكن حصل خطأ في رفعه للسحابة — من فضلك تأكد من اتصال الإنترنت وأعد المحاولة', true);
+      console.error('Cloud save failed during restore:', err);
+    }
+    setTimeout(() => { location.reload(); }, 800);
   };
   reader.readAsText(file);
 });
