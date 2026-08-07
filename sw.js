@@ -11,16 +11,20 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// عند التفعيل، نحذف أي نسخ كاش قديمة من إصدارات سابقة
+// عند التفعيل، نحذف أي نسخ كاش قديمة من إصدارات سابقة، ونجبر كل الصفحات المفتوحة تاخد التحكم الجديد فورًا
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    })
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
+      await self.clients.claim();
+
+      // بمجرد ما ناخد التحكم، نبعت رسالة لكل صفحة مفتوحة تجبرها تعمل Reload فوري
+      // عشان تاخد آخر نسخة من الكود بدل ما تفضل شغالة بالـ JavaScript القديم في الذاكرة
+      const clientsList = await self.clients.matchAll({ type: 'window' });
+      clientsList.forEach((client) => client.postMessage({ type: 'SW_UPDATED' }));
+    })()
   );
-  self.clients.claim();
 });
 
 /*
