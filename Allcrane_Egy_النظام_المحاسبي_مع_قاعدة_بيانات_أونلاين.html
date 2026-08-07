@@ -7340,8 +7340,8 @@ function computeWorkerDuesForMonth(workerId, month) {
   if (w.employmentType === 'شهري') {
     const md = computeMonthlyDues(workerId, month);
     const daysWorked = monthRecords.filter(a => a.status === 'حاضر').length;
-    const balanceDue = Math.max(0, md.total - md.paid);
-    return { daysWorked, totalDue: md.total, totalPaid: md.paid, balanceDue, monthReady: md.monthReady };
+    const balanceDue = Math.max(0, md.netDisplayed - md.paid);
+    return { daysWorked, totalDue: md.netDisplayed, totalPaid: md.paid, balanceDue, monthReady: md.monthReady };
   }
 
   const totalDue = monthRecords.reduce((s, r) => s + r.totalDue, 0);
@@ -7752,6 +7752,14 @@ function renderLaborSettlementRows() {
       });
       amountCell.appendChild(fullBtn);
 
+      const editRateBtn = document.createElement('button');
+      editRateBtn.className = 'icon-btn';
+      editRateBtn.textContent = '✏️';
+      editRateBtn.title = 'تعديل أجر هذا اليوم بالذات (زيادة أو نقصان)';
+      editRateBtn.style.fontSize = '11px';
+      editRateBtn.addEventListener('click', () => openAttendanceRateEditModal(a.id));
+      amountCell.appendChild(editRateBtn);
+
       rowsWrapper.appendChild(row);
     });
 
@@ -7861,12 +7869,12 @@ document.getElementById('ld-settlement-cancel').addEventListener('click', () => 
 });
 
 /* بيان الحركة بصيغة ثابتة كما طلب: "حساب عدد أيام العمل لـ (الاسم) في تاريخ (...)" */
-function buildLaborSettlementDescription(workerName, datesInvolved) {
+function buildLaborSettlementDescription(workerName, datesInvolved, dayCount, grandTotal) {
   const sortedDates = [...datesInvolved].sort();
   const dateLabel = sortedDates.length === 1
     ? fmtDate(sortedDates[0])
     : `${fmtDate(sortedDates[0])} حتى ${fmtDate(sortedDates[sortedDates.length - 1])}`;
-  return `حساب عدد أيام العمل لـ ${workerName} في تاريخ ${dateLabel}`;
+  return `سداد ${dayCount} يوم عمل لـ ${workerName} (${dateLabel}) — ضمن دفعة إجمالية ${fmt(grandTotal)} ج.م`;
 }
 
 document.getElementById('ld-settlement-submit').addEventListener('click', () => {
@@ -7903,6 +7911,8 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
   }
 
   // نوزّع (الدفعة النقدية + رصيد السلفة المستخدم) على حركة منفصلة لكل مشروع، بنفس تفاصيل الأيام المحددة يدويًا
+  const grandTotal = daysTotal + advanceUsed; // إجمالي الدفعة الأصلية الكاملة، قبل أي توزيع على المشاريع
+  const settlementRef = 'STL-' + Date.now().toString(36).toUpperCase(); // مرجع موحّد يربط كل القيود الناتجة عن نفس عملية السداد دي
   const touchedProjects = {};
   const lines = [];
   dayEntries.forEach(([attId, amt]) => {
@@ -7921,7 +7931,7 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
 
     const relatedTxn = state.transactions.find(t => t.project === projectName && t.customer);
     const projectCustomer = relatedTxn ? relatedTxn.customer : 'عام / غير محدد';
-    const desc = buildLaborSettlementDescription(w.name, projectDates);
+    const desc = buildLaborSettlementDescription(w.name, projectDates, projectLines.length, grandTotal);
 
     const txn = {
       id: 'TXN-' + String(state.nextTxnNo).padStart(4, '0'),
@@ -7941,7 +7951,9 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
       laborSettlement: {
         workerId: w.id,
         attendanceIds: projectLines.map(l => l.attendanceId),
-        lines: projectLines
+        lines: projectLines,
+        settlementRef,
+        grandTotal
       }
     };
     if (ldTreasury === 'بنك') txn.bankAccountId = document.getElementById('ld-bank-account')?.value || 'default-bank';
@@ -7961,7 +7973,6 @@ document.getElementById('ld-settlement-submit').addEventListener('click', () => 
 
   renumberAllTransactionsByDate();
 
-  const grandTotal = daysTotal;
   logAuditEvent('سداد مستحقات عامل', `${w.name}: ${fmt(grandTotal)} ج.م من ${ldTreasury} بتاريخ ${fmtDate(paymentDate)}${advanceUsed > 0.005 ? ` (منها ${fmt(advanceUsed)} من رصيد سلفة)` : ''} — موزّعة على ${projectNames.length} مشروع (${projectNames.join('، ')})`);
   saveState();
 
@@ -8696,9 +8707,9 @@ function renderWorkerDetail() {
     if (isMonthly) {
       const md = computeMonthlyDues(w.id, wdMonthFilter);
       document.getElementById('wd-days').textContent = filteredForStats.filter(r => r.status === 'حاضر').length;
-      document.getElementById('wd-total-due').textContent = fmt(md.total);
-      document.getElementById('wd-balance').textContent = fmt(Math.max(0, md.total - md.paid));
-      document.getElementById('wd-balance').style.color = (md.total - md.paid) > 0.005 ? 'var(--danger)' : 'var(--success)';
+      document.getElementById('wd-total-due').textContent = fmt(md.netDisplayed);
+      document.getElementById('wd-balance').textContent = fmt(Math.max(0, md.netDisplayed - md.paid));
+      document.getElementById('wd-balance').style.color = (md.netDisplayed - md.paid) > 0.005 ? 'var(--danger)' : 'var(--success)';
     } else {
       const totalDue = filteredForStats.reduce((s, r) => s + r.totalDue, 0);
       const totalPaid = filteredForStats.reduce((s, r) => s + attendancePaidAmount(r.id), 0);
@@ -11312,26 +11323,12 @@ document.getElementById('partnership-history-close-btn').addEventListener('click
 });
 
 /* =====================================================================
-   تسجيل Service Worker (PWA) — مع تحديث تلقائي فوري عند وجود نسخة جديدة
+   تسجيل Service Worker (PWA)
    ===================================================================== */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').then((registration) => {
-      // نفحص وجود تحديث جديد كل 30 دقيقة لو التطبيق فاضل مفتوح فترة طويلة
-      setInterval(() => { registration.update(); }, 30 * 60 * 1000);
-    }).catch((err) => {
+    navigator.serviceWorker.register('./sw.js').catch((err) => {
       console.error('Service worker registration failed:', err);
-    });
-
-    // لما الـ Service Worker الجديد ياخد التحكم فعليًا، بيبعتلنا رسالة SW_UPDATED
-    // فنعمل Reload تلقائي فورًا عشان نضمن إن الكود اللي شغال في المتصفح دايمًا هو آخر نسخة
-    let reloadedOnce = false;
-    navigator.serviceWorker.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'SW_UPDATED' && !reloadedOnce) {
-        reloadedOnce = true;
-        showToast('تم تحديث النظام لآخر نسخة — جاري إعادة التحميل...');
-        setTimeout(() => { location.reload(); }, 1000);
-      }
     });
   });
 }
