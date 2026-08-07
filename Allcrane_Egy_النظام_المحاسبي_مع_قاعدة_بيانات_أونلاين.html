@@ -6399,9 +6399,11 @@ function computeMonthlyDues(workerId, month) {
   const baseSalary = monthReady ? w.monthlySalary : 0;
   const grossTotal = baseSalary + extras;
 
-  // الخصومات بس بتتخصم من "المعروض" تلقائيًا وفورًا. السلف تفضل "رصيد متاح" بس، ومالهاش أي أثر تلقائي على المعروض
-  // إلا لو المستخدم بنفسه اختار يستخدم منها جزء وقت السداد (من شاشة السداد مباشرة)
-  const openDeductions = openAdvancesDeductionsForWorker(workerId).filter(a => a.type === 'خصم').reduce((s, a) => s + a.amount, 0);
+  // الخصومات المطبّقة على الشهر ده = كل خصم تاريخه في نفس الشهر (بغض النظر عن حالة settled الحالية بتاعته،
+  // عشان الحساب التاريخي لشهر معين يفضل ثابت زي ما اتسدد بيه فعليًا، مش يتغيّر بأثر رجعي لما نغيّر حالة الخصم دلوقتي)
+  const monthDeductions = (state.advancesDeductions || []).filter(a => a.workerId === workerId && a.type === 'خصم' && a.date.slice(0, 7) === month);
+  const openDeductions = monthDeductions.reduce((s, a) => s + a.amount, 0);
+
   const openAdvances = openAdvancesDeductionsForWorker(workerId).filter(a => a.type === 'سلفة');
   const openAdvBalance = openAdvances.reduce((s, a) => s + (a.amountRemaining !== undefined ? a.amountRemaining : a.amount), 0);
   const netDisplayed = Math.max(0, grossTotal - openDeductions);
@@ -8365,6 +8367,10 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
 
   if (!paymentDate) { showToast('من فضلك اختر تاريخ السداد', true); return; }
   if (amountPaid <= 0) { showToast('من فضلك أدخل مبلغ سداد أو استخدم رصيد سلفة أكبر من صفر', true); return; }
+  if (!md.monthReady) {
+    showToast('هذا الشهر لسه شغال ومحتاج يتقفل أول — دوس "إغلاق الشهر الآن يدويًا" فوق قبل ما تقدر تسدد المرتب الأساسي', true);
+    return;
+  }
   if (amountPaid > remainingNet + 0.005) {
     showToast(`المبلغ أكبر من المستحق فعليًا بعد خصم الخصومات (${fmt(remainingNet)})`, true);
     return;
