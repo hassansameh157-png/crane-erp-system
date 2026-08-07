@@ -7459,7 +7459,13 @@ function renderLaborDuesPage() {
     document.getElementById('ld-paid-month-label').textContent = `مسدد خلال (${periodLabel})`;
   } else {
     // من غير فلتر: البطاقات بتعرض الإجمالي الكامل المفتوح + إجمالي المسدد على مدار كل الوقت
-    state.workers.forEach(w => { openTotal += computeWorkerDues(w.id).balanceDue; });
+    state.workers.forEach(w => {
+      try {
+        openTotal += computeWorkerDues(w.id).balanceDue;
+      } catch (err) {
+        console.error(`خطأ في حساب مستحقات العامل ${w.name} (${w.id}):`, err);
+      }
+    });
     state.transactions.forEach(t => {
       if (t.laborSettlement || t.monthlySettlement) paidTotal += t.amount;
     });
@@ -7476,42 +7482,49 @@ function renderLaborDuesPage() {
   document.getElementById('ld-empty').style.display = filteredWorkers.length === 0 ? 'block' : 'none';
 
   filteredWorkers.forEach(w => {
-    const dues = monthFilter ? computeWorkerDuesForPeriod(w.id, monthFilter) : computeWorkerDues(w.id);
-    const isMonthly = w.employmentType === 'شهري';
-    const typeBadge = isMonthly ? '<span class="badge badge-bank">🗓️ شهري</span>' : '<span class="badge badge-mute">📅 يومي</span>';
-    const tr = document.createElement('tr');
-    const advNote = (!monthFilter && dues.advancesDeductions > 0.005) ? `<br><span style="font-size:11px;color:var(--warning)">(بعد خصم ${fmt(dues.advancesDeductions)} سلف/خصومات)</span>` : '';
-    const monthNotReadyNote = (monthFilter && isMonthly && !dues.monthReady) ? `<br><span style="font-size:11px;color:var(--warning)">(الشهر لسه شغال — المرتب الأساسي هيظهر مستحق بعد ما يخلص)</span>` : '';
-    tr.innerHTML = `
-      <td>${w.name}</td>
-      <td>${w.role || '—'}</td>
-      <td>${typeBadge}</td>
-      <td class="text-left num">${dues.daysWorked}</td>
-      <td class="text-left num">${fmt(dues.totalDue)}${monthNotReadyNote}</td>
-      <td class="text-left num" style="color:var(--success)">${fmt(dues.totalPaid)}</td>
-      <td class="text-left num" style="font-weight:700;color:${dues.balanceDue > 0.005 ? 'var(--danger)' : 'var(--success)'}">${fmt(dues.balanceDue)}${advNote}</td>
-      <td></td>
-    `;
-    const actionCell = tr.querySelector('td:last-child');
+    try {
+      const dues = monthFilter ? computeWorkerDuesForPeriod(w.id, monthFilter) : computeWorkerDues(w.id);
+      const isMonthly = w.employmentType === 'شهري';
+      const typeBadge = isMonthly ? '<span class="badge badge-bank">🗓️ شهري</span>' : '<span class="badge badge-mute">📅 يومي</span>';
+      const tr = document.createElement('tr');
+      const advNote = (!monthFilter && dues.advancesDeductions > 0.005) ? `<br><span style="font-size:11px;color:var(--warning)">(بعد خصم ${fmt(dues.advancesDeductions)} سلف/خصومات)</span>` : '';
+      const monthNotReadyNote = (monthFilter && isMonthly && !dues.monthReady) ? `<br><span style="font-size:11px;color:var(--warning)">(الشهر لسه شغال — المرتب الأساسي هيظهر مستحق بعد ما يخلص)</span>` : '';
+      tr.innerHTML = `
+        <td>${w.name}</td>
+        <td>${w.role || '—'}</td>
+        <td>${typeBadge}</td>
+        <td class="text-left num">${dues.daysWorked}</td>
+        <td class="text-left num">${fmt(dues.totalDue)}${monthNotReadyNote}</td>
+        <td class="text-left num" style="color:var(--success)">${fmt(dues.totalPaid)}</td>
+        <td class="text-left num" style="font-weight:700;color:${dues.balanceDue > 0.005 ? 'var(--danger)' : 'var(--success)'}">${fmt(dues.balanceDue)}${advNote}</td>
+        <td></td>
+      `;
+      const actionCell = tr.querySelector('td:last-child');
 
-    const reportBtn = document.createElement('button');
-    reportBtn.className = 'btn btn-sm';
-    reportBtn.textContent = 'التقرير';
-    reportBtn.style.marginLeft = '6px';
-    reportBtn.addEventListener('click', () => { currentWorkerDetail = w.id; navigateToPage('worker-detail-page'); });
-    actionCell.appendChild(reportBtn);
+      const reportBtn = document.createElement('button');
+      reportBtn.className = 'btn btn-sm';
+      reportBtn.textContent = 'التقرير';
+      reportBtn.style.marginLeft = '6px';
+      reportBtn.addEventListener('click', () => { currentWorkerDetail = w.id; navigateToPage('worker-detail-page'); });
+      actionCell.appendChild(reportBtn);
 
-    if (dues.balanceDue > 0.005) {
-      const payBtn = document.createElement('button');
-      payBtn.className = 'btn btn-sm btn-primary';
-      payBtn.textContent = isMonthly ? 'سداد راتب' : 'سداد';
-      payBtn.addEventListener('click', () => {
-        if (isMonthly) openMonthlySettlement(w.id);
-        else openLaborSettlement(w.id);
-      });
-      actionCell.appendChild(payBtn);
+      if (dues.balanceDue > 0.005) {
+        const payBtn = document.createElement('button');
+        payBtn.className = 'btn btn-sm btn-primary';
+        payBtn.textContent = isMonthly ? 'سداد راتب' : 'سداد';
+        payBtn.addEventListener('click', () => {
+          if (isMonthly) openMonthlySettlement(w.id);
+          else openLaborSettlement(w.id);
+        });
+        actionCell.appendChild(payBtn);
+      }
+      tbody.appendChild(tr);
+    } catch (err) {
+      console.error(`خطأ في عرض صف العامل ${w.name} (${w.id}):`, err);
+      const errTr = document.createElement('tr');
+      errTr.innerHTML = `<td>${w.name}</td><td colspan="7" style="color:var(--danger)">⚠️ حصل خطأ في عرض بيانات هذا العامل — راجع الـ Console لمزيد من التفاصيل</td>`;
+      tbody.appendChild(errTr);
     }
-    tbody.appendChild(tr);
   });
 }
 
