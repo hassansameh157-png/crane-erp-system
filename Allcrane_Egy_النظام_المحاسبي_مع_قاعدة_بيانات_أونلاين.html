@@ -6302,7 +6302,8 @@ function openAdvancesDeductionsForWorker(workerId) {
     .filter(a => a.workerId === workerId)
     .filter(a => {
       if (a.type === 'سلفة') return (a.amountRemaining !== undefined ? a.amountRemaining : a.amount) > 0.005;
-      return true; // الخصم دايمًا "نشط" بمجرد تسجيله لحد ما يتحذف يدويًا
+      // الخصم بيفضل "نشط" لحد ما يتم تسديده فعليًا (يتقفل الشهر اللي اتخصم فيه بالكامل)، وقتها بيتحدد settled ويختفي تلقائيًا
+      return !a.settled;
     })
     .sort((a, b) => (a.date < b.date ? -1 : 1));
 }
@@ -8442,6 +8443,11 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
 
     // نمسح كل الدفعات الجزئية المؤقتة لنفس الشهر بعد ما اتضمّت في القيد النهائي
     state.partialMonthlyPayments = state.partialMonthlyPayments.filter(p => !(p.workerId === w.id && p.month === month));
+
+    // الخصومات اللي كانت "مفتوحة" واتخصمت فعليًا من صافي المرتب في التسوية دي، بقت "مستهلكة" ومتترحلش لشهر تاني
+    state.advancesDeductions.forEach(a => {
+      if (a.workerId === w.id && a.type === 'خصم' && !a.settled) a.settled = true;
+    });
   }
 
   // نخصم من رصيد كل سلفة استُخدم منها جزء (بدون أي قيد جديد — الفلوس دي أصلًا خرجت وقت السلفة نفسها)
@@ -8485,6 +8491,7 @@ function renderAdvancesPage() {
       if (remaining > 0.005) totalUnsettled += remaining;
     } else {
       totalDeductions += a.amount;
+      if (!a.settled) totalUnsettled += a.amount;
     }
   });
   document.getElementById('adv-total-advances').textContent = fmt(totalAdvances);
@@ -8521,7 +8528,9 @@ function renderAdvancesTable() {
         ? '<span class="badge badge-success">✓ تم التسوية</span>'
         : `<span class="badge badge-warning">لم يتم التسوية (متبقي ${fmt(remaining)})</span>`;
     } else {
-      statusBadge = '<span class="badge badge-mute">مطبّق فورًا</span>';
+      statusBadge = a.settled
+        ? '<span class="badge badge-success">✓ تم التسوية</span>'
+        : '<span class="badge badge-warning">لم يتم التسوية بعد</span>';
     }
 
     const tr = document.createElement('tr');
