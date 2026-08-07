@@ -4333,18 +4333,43 @@ let selectedTxnIds = new Set();
 /* لو الحركة اللي بتتمسح كانت مستخدمة فيها رصيد سلفة (كامل أو جزء)، نرجّع المبلغ ده لرصيد السلفة تلقائيًا
    عشان السلفة ترجع "لم يتم التسوية" لو كانت "تم التسوية" بسبب القيد اللي دلوقتي بيتمسح */
 function restoreAdvanceBalanceOnDelete(txn) {
-  if (!txn.laborSettlement || !txn.laborSettlement.advanceUsage || txn.laborSettlement.advanceUsage.length === 0) return;
-  let restoredCount = 0;
-  txn.laborSettlement.advanceUsage.forEach(u => {
-    const adv = state.advancesDeductions.find(a => a.id === u.advId);
-    if (adv) {
-      const currentRemaining = adv.amountRemaining !== undefined ? adv.amountRemaining : 0;
-      adv.amountRemaining = currentRemaining + u.amount;
-      restoredCount++;
+  // السداد اليومي بيخزن advanceUsage جوا laborSettlement، والسداد الشهري بيخزنها مباشرة على مستوى الحركة نفسها
+  const advanceUsage = (txn.laborSettlement && txn.laborSettlement.advanceUsage) || txn.advanceUsage;
+  if (advanceUsage && advanceUsage.length > 0) {
+    let restoredCount = 0;
+    advanceUsage.forEach(u => {
+      const adv = state.advancesDeductions.find(a => a.id === u.advId);
+      if (adv) {
+        const currentRemaining = adv.amountRemaining !== undefined ? adv.amountRemaining : 0;
+        adv.amountRemaining = currentRemaining + u.amount;
+        restoredCount++;
+      }
+    });
+    if (restoredCount > 0) {
+      logAuditEvent('استرجاع رصيد سلفة', `تم إرجاع رصيد سلفة بعد حذف حركة مرتبطة بها — ${txn.desc}`);
     }
-  });
-  if (restoredCount > 0) {
-    logAuditEvent('استرجاع رصيد سلفة', `تم إرجاع رصيد سلفة بعد حذف حركة مرتبطة بها — ${txn.desc}`);
+  }
+
+  // لو الحركة دي جزء من تسوية شهرية أقفلت خصومات معينة، نتأكد الأول إن كل الحركات التانية المرتبطة بنفس التسوية
+  // اتمسحت هي كمان قبل ما نرجّع الخصم لحالته "لم يتم التسوية" — عشان متتلغيش تسوية شهر لسه فيه قيود تانية موجودة
+  if (txn.settledDeductionIds && txn.settledDeductionIds.length > 0 && txn.monthlySettlement) {
+    const siblingTxnsExist = state.transactions.some(t =>
+      t.id !== txn.id &&
+      t.monthlySettlement &&
+      t.monthlySettlement.workerId === txn.monthlySettlement.workerId &&
+      t.monthlySettlement.month === txn.monthlySettlement.month &&
+      t.settledDeductionIds
+    );
+    if (!siblingTxnsExist) {
+      let restoredDeductions = 0;
+      txn.settledDeductionIds.forEach(dedId => {
+        const ded = state.advancesDeductions.find(a => a.id === dedId);
+        if (ded && ded.settled) { ded.settled = false; restoredDeductions++; }
+      });
+      if (restoredDeductions > 0) {
+        logAuditEvent('استرجاع حالة خصم', `تم إرجاع ${restoredDeductions} خصم لحالة "لم يتم التسوية" بعد حذف حركة راتب مرتبطة بها — ${txn.desc}`);
+      }
+    }
   }
 }
 
@@ -8397,7 +8422,7 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
         project: 'عام / غير محدد',
         customer: 'عام / غير محدد',
         desc: `راتب الموظف ${w.name} لشهر ${monthLabel}`,
-        amount: md.grossTotal,
+        amount: md.netDisplayed,
         treasury: ldMonthlyTreasury,
         notes: `إجمالي المرتب: ${fmt(md.grossTotal)} — بعد خصم خصومات ${fmt(md.openAdvDed)} — الصافي المدفوع: ${fmt(md.netDisplayed)}`,
         monthlySettlement: { workerId: w.id, month },
@@ -8410,7 +8435,7 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
     } else {
       Object.entries(projectDayCounts).forEach(([projectName, dayCount]) => {
         const shareRatio = dayCount / totalDaysInMonth;
-        const projectAmount = md.grossTotal * shareRatio;
+        const projectAmount = md.netDisplayed * shareRatio;
         const relatedTxn = state.transactions.find(t => t.project === projectName && t.customer);
         const projectCustomer = relatedTxn ? relatedTxn.customer : 'عام / غير محدد';
         const desc = `راتب الموظف ${w.name} لشهر ${monthLabel} — نصيب مشروع ${projectName} (${dayCount} من ${totalDaysInMonth} يوم)`;
@@ -8430,7 +8455,7 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
           desc,
           amount: projectAmount,
           treasury: ldMonthlyTreasury,
-          notes: `نسبة الأيام: ${dayCount}/${totalDaysInMonth} — إجمالي المرتب: ${fmt(md.grossTotal)}، بعد خصم خصومات ${fmt(md.openAdvDed)}`,
+          notes: `نسبة الأيام: ${dayCount}/${totalDaysInMonth} — إجمالي المرتب: ${fmt(md.grossTotal)}، بعد خصم خصومات ${fmt(md.openAdvDed)}، الصافي: ${fmt(md.netDisplayed)}`,
           monthlySettlement: { workerId: w.id, month },
           advanceUsage
         };
@@ -8444,9 +8469,18 @@ document.getElementById('ld-monthly-settlement-submit').addEventListener('click'
     // نمسح كل الدفعات الجزئية المؤقتة لنفس الشهر بعد ما اتضمّت في القيد النهائي
     state.partialMonthlyPayments = state.partialMonthlyPayments.filter(p => !(p.workerId === w.id && p.month === month));
 
-    // الخصومات اللي كانت "مفتوحة" واتخصمت فعليًا من صافي المرتب في التسوية دي، بقت "مستهلكة" ومتترحلش لشهر تاني
+    // الخصومات اللي كانت "مفتوحة" واتخصمت فعليًا من صافي المرتب في التسوية دي، بقت "مستهلكة" ومتترحلش لشهر تاني.
+    // بنربطها بكل حركة اترحّلت من التسوية دي (settledDeductionIds)، عشان لو أي حركة اتمسحت لاحقًا، نقدر نرجّع الخصم لحالته الأصلية
+    const settledDeductionIds = [];
     state.advancesDeductions.forEach(a => {
-      if (a.workerId === w.id && a.type === 'خصم' && !a.settled) a.settled = true;
+      if (a.workerId === w.id && a.type === 'خصم' && !a.settled) {
+        a.settled = true;
+        settledDeductionIds.push(a.id);
+      }
+    });
+    createdTxnIds.forEach(txnId => {
+      const txn = state.transactions.find(t => t.id === txnId);
+      if (txn && settledDeductionIds.length > 0) txn.settledDeductionIds = settledDeductionIds;
     });
   }
 
