@@ -2339,6 +2339,15 @@
         <button class="btn btn-sm" id="audit-run-integrity-check">تشغيل الفحص</button>
       </div>
       <div id="audit-integrity-results"></div>
+
+      <div class="page-header" style="margin-top:28px;margin-bottom:10px">
+        <p style="font-weight:700;font-size:14px;margin:0">فحص تفاصيل حركة معينة (للتشخيص الدقيق)</p>
+      </div>
+      <div class="filter-bar">
+        <input type="text" id="audit-search-desc" placeholder="ابحث في وصف البيان (مثال: اسم العامل)...">
+        <button class="btn btn-sm" id="audit-search-btn">بحث</button>
+      </div>
+      <div id="audit-search-results"></div>
     </div>
 
     <!-- ============ شراكة كابيتال واي ============ -->
@@ -10997,6 +11006,36 @@ document.getElementById('audit-run-integrity-check').addEventListener('click', (
       </div>
     </div>
   `).join('');
+});
+
+document.getElementById('audit-search-btn').addEventListener('click', () => {
+  const term = document.getElementById('audit-search-desc').value.trim();
+  const resultsEl = document.getElementById('audit-search-results');
+  if (!term) { resultsEl.innerHTML = '<p style="font-size:13px;color:var(--ink-mute)">اكتب كلمة للبحث عنها في وصف الحركات</p>'; return; }
+
+  const matches = state.transactions.filter(t => t.desc && t.desc.includes(term));
+  if (matches.length === 0) {
+    resultsEl.innerHTML = `<p style="font-size:13px;color:var(--ink-mute)">لا توجد حركات فيها "${escapeHtml(term)}" في الوصف</p>`;
+    return;
+  }
+
+  resultsEl.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);margin:8px 0">تم العثور على ${matches.length} حركة</p>` +
+    matches.map(t => {
+      const treasuryRaw = t.treasury || '(فارغة تمامًا)';
+      const treasuryCharCodes = t.treasury ? [...t.treasury].map(c => c.charCodeAt(0)).join(', ') : '—';
+      const matchesCustodyExactly = t.treasury === 'عهدة';
+      return `
+        <div class="card card-tight" style="margin-bottom:10px;padding:12px 14px">
+          <p style="font-size:13px;font-weight:700;margin:0 0 6px">${escapeHtml(t.desc)}</p>
+          <p style="font-size:12px;color:var(--ink-soft);margin:2px 0"><b>التاريخ:</b> ${fmtDate(t.date)} | <b>المبلغ:</b> ${fmt(t.amount)} | <b>المشروع:</b> ${escapeHtml(t.project || '—')}</p>
+          <p style="font-size:12px;margin:2px 0"><b>قيمة الخزينة المخزّنة:</b> "${escapeHtml(treasuryRaw)}"</p>
+          <p style="font-size:11px;color:var(--ink-mute);margin:2px 0"><b>أكواد الحروف:</b> ${treasuryCharCodes}</p>
+          <p style="font-size:12px;margin:4px 0 0;font-weight:700;color:${matchesCustodyExactly ? 'var(--success)' : 'var(--danger)'}">
+            ${matchesCustodyExactly ? '✅ القيمة مطابقة تمامًا لكلمة "عهدة" — المفروض تظهر في صفحة العهدة' : '⚠️ القيمة غير مطابقة تمامًا — هذا هو سبب عدم ظهورها في صفحة العهدة'}
+          </p>
+        </div>
+      `;
+    }).join('');
 });
 
 
